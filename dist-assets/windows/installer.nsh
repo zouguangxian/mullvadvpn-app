@@ -83,6 +83,25 @@
 !define ExtractDriver '!insertmacro "ExtractDriver"'
 
 #
+# ExtractWintun
+#
+# Extract Wintun driver files into $TEMP\wintun
+#
+!macro ExtractWintun
+
+	SetOutPath "$TEMP\wintun"
+
+	${If} ${AtLeastWin10}
+		File "${BUILD_RESOURCES_DIR}\binaries\windows\wintun\whql\*"
+	${Else}
+		File "${BUILD_RESOURCES_DIR}\binaries\windows\wintun\legacy\*"
+	${EndIf}
+
+!macroend
+
+!define ExtractWintun '!insertmacro "ExtractWintun"'
+
+#
 # ForceRenameAdapter
 #
 # For when there's a broken TAP adapter present, such that the adapter name
@@ -286,6 +305,66 @@
 !macroend
 
 !define InstallDriver '!insertmacro "InstallDriver"'
+
+#
+# InstallWintun
+#
+# Install Wintun driver
+#
+# Returns: 0 in $R0 on success, otherwise an error message in $R0
+#
+!macro InstallWintun
+
+	log::Log "InstallWintun()"
+	
+	Push $0
+	Push $1
+
+	${IfNot} ${AtLeastWin10}
+		Goto InstallWintun_legacy
+	${EndIf}
+
+	${DisableX64FSRedirection}
+	nsExec::ExecToStack '"$SYSDIR\pnputil.exe" /add-driver "$TEMP\wintun\wintun.inf" /install'
+	${EnableX64FSRedirection}
+
+	Pop $0
+	Pop $1
+
+	Goto InstallWintun_check_status
+
+	InstallWintun_legacy:
+
+	# TODO: Install cert to avoid Windows driver warning pop-up
+	
+	${DisableX64FSRedirection}
+	nsExec::ExecToStack '"$SYSDIR\pnputil.exe" -i -a "$TEMP\wintun\wintun.inf"'
+	${EnableX64FSRedirection}
+	
+	Pop $0
+	Pop $1
+	
+	InstallWintun_check_status:
+	
+	${If} $0 != 0
+		StrCpy $R0 "Failed to install Wintun: error $0"
+		log::LogWithDetails $R0 $1
+		Goto InstallWintun_return
+	${EndIf}
+
+	log::Log "InstallWintun() completed successfully"
+	
+	Push 0
+	Pop $R0
+	
+	InstallWintun_return:
+
+	Pop $1
+	Pop $0
+
+!macroend
+
+!define InstallWintun '!insertmacro "InstallWintun"'
 
 #
 # InstallService
@@ -520,6 +599,15 @@
 		Abort
 	${EndIf}
 
+	${ExtractWintun}
+	${InstallWintun}
+
+	${If} $R0 != 0
+		MessageBox MB_OK "Fatal error during Wintun installation: $R0"
+		${BreakInstallation}
+		Abort
+	${EndIf}
+	
 	${InstallService}
 
 	${If} $R0 != 0
