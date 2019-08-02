@@ -36,26 +36,28 @@ class LocationInfoCache(
 
     var state: TunnelState = TunnelState.Disconnected()
         set(value) {
-            field = value
+            if (field != value) {
+                field = value
 
-            when (value) {
-                is TunnelState.Disconnected -> {
-                    location = lastKnownRealLocation
-                    fetchLocation()
-                }
-                is TunnelState.Connecting -> location = value.location
-                is TunnelState.Connected -> {
-                    location = value.location
-                    fetchLocation()
-                }
-                is TunnelState.Disconnecting -> {
-                    when (value.actionAfterDisconnect) {
-                        is ActionAfterDisconnect.Nothing -> location = lastKnownRealLocation
-                        is ActionAfterDisconnect.Block -> location = null
-                        is ActionAfterDisconnect.Reconnect -> location = locationFromSelectedRelay()
+                when (value) {
+                    is TunnelState.Disconnected -> {
+                        location = lastKnownRealLocation
+                        fetchLocation()
                     }
+                    is TunnelState.Connecting -> location = value.location
+                    is TunnelState.Connected -> {
+                        location = value.location
+                        fetchLocation()
+                    }
+                    is TunnelState.Disconnecting -> {
+                        location = when (value.actionAfterDisconnect) {
+                            is ActionAfterDisconnect.Nothing -> lastKnownRealLocation
+                            is ActionAfterDisconnect.Block -> null
+                            is ActionAfterDisconnect.Reconnect -> locationFromSelectedRelay()
+                        }
+                    }
+                    is TunnelState.Blocked -> location = null
                 }
-                is TunnelState.Blocked -> location = null
             }
         }
 
