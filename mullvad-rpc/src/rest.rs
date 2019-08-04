@@ -1,8 +1,8 @@
 use crate::HttpsConnectorWithSni;
 use futures::{
-    future,
+    future::{self, Either},
     sync::{mpsc, oneshot},
-    Future, Stream,
+    Future, Poll, Stream,
 };
 use hyper::{client::Client, Request, StatusCode, Uri};
 use hyper_openssl::openssl::error::ErrorStack;
@@ -35,6 +35,23 @@ pub enum Error {
 pub type RequestSender = mpsc::UnboundedSender<(Request, oneshot::Sender<Result<Vec<u8>>>)>;
 type RequestReceiver = mpsc::UnboundedReceiver<(Request, oneshot::Sender<Result<Vec<u8>>>)>;
 
+struct SenderCloseWatcher<T>(oneshot::Sender<T>);
+
+impl<T> Future for SenderCloseWatcher<T> {
+    type Item = ();
+    type Error = ();
+
+    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
+        self.0.poll_cancel()
+    }
+}
+
+impl<T> SenderCloseWatcher<T> {
+    fn send(self, item: T) -> std::result::Result<(), T> {
+        self.0.send(item)
+    }
+}
+
 pub fn create_https_client<P: AsRef<Path>>(ca_path: P, handle: &Handle) -> Result<RequestSender> {
     let connector = HttpsConnectorWithSni::new(ca_path, handle)?;
     let client = Client::configure()
@@ -65,7 +82,18 @@ fn create_request_processing_future<CC: hyper::client::Connect>(
             })
             .and_then(|response: hyper::Response| response.body().concat2().from_err())
             .map(|response_chunk| response_chunk.to_vec())
-            .then(move |response_result| {
+            .select2(SenderCloseWatcher(response_tx))
+            .then(move |response_or_cancellation| {
+                let (response_result, response_tx) = match response_or_cancellation {
+                    Ok(Either::A((response, response_tx))) => (Ok(response), response_tx),
+                    Err(Either::A((error, response_tx))) => (Err(error), response_tx),
+
+                    Ok(Either::B(((), _))) => {
+                        log::warn!("HTTP request has been cancelled");
+                        return Ok(());
+                    }
+                    Err(Either::B(((), _))) => unreachable!("SenderCloseWatcher is infallible"),
+                };
                 if response_tx.send(response_result).is_err() {
                     log::warn!("Unable to send response back to caller");
                 }
