@@ -1,6 +1,5 @@
 package net.mullvad.mullvadvpn.dataproxy
 
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +19,6 @@ class LocationInfoCache(
     val relayListListener: RelayListListener
 ) {
     private var lastKnownRealLocation: GeoIpLocation? = null
-    private var activeFetch: Job? = null
 
     var onNewLocation: ((GeoIpLocation?) -> Unit)? = null
         set(value) {
@@ -86,19 +84,27 @@ class LocationInfoCache(
     }
 
     private fun fetchLocation() {
-        val previousFetch = activeFetch
-        val initialState = state
+        stateToFetchFor = state
 
-        activeFetch = GlobalScope.launch(Dispatchers.Main) {
-            var newLocation: GeoIpLocation? = null
+        GlobalScope.launch(Dispatchers.Default) {
+            requestToFetchLocation()
+        }
+    }
 
-            previousFetch?.join()
+    private fun shouldRetryFetch(): Boolean {
+        val state = this.state
 
-            while (newLocation == null && shouldRetryFetch() && state == initialState) {
-                newLocation = executeFetch().await()
+        return state is TunnelState.Disconnected ||
+            state is TunnelState.Connected
+    }
+
+    private fun newLocationFetched(newLocation: GeoIpLocation?) {
+        if (newLocation == null) {
+            if (shouldRetryFetch() && state == stateToFetchFor) {
+                requestToFetchLocation()
             }
-
-            if (newLocation != null && state == initialState) {
+        } else if (state == stateToFetchFor) {
+            GlobalScope.launch(Dispatchers.Main) {
                 when (state) {
                     is TunnelState.Disconnected -> {
                         lastKnownRealLocation = newLocation
@@ -111,14 +117,5 @@ class LocationInfoCache(
         }
     }
 
-    private fun executeFetch() = GlobalScope.async(Dispatchers.Default) {
-        daemon.await().getCurrentLocation()
-    }
-
-    private fun shouldRetryFetch(): Boolean {
-        val state = this.state
-
-        return state is TunnelState.Disconnected ||
-            state is TunnelState.Connected
-    }
+    private external fun requestToFetchLocation()
 }
