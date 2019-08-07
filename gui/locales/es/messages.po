@@ -48,7 +48,7 @@ msgctxt "account-view"
 msgid "Buy more credit"
 msgstr "Comprar más crédito"
 
-msgctxt "account-view"
+msgctxt "clipboard-label"
 msgid "COPIED TO CLIPBOARD!"
 msgstr "¡COPIADO EN EL PORTAPAPELES!"
 

@@ -48,7 +48,7 @@ msgctxt "account-view"
 msgid "Buy more credit"
 msgstr "購買更多點數"
 
-msgctxt "account-view"
+msgctxt "clipboard-label"
 msgid "COPIED TO CLIPBOARD!"
 msgstr "已複製到剪貼簿！"
 
