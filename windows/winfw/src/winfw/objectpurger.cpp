@@ -25,20 +25,6 @@ void RemoveRange(wfp::FilterEngine &engine, ObjectDeleter deleter, TRange range)
 } // anonymous namespace
 
 //static
-ObjectPurger::RemovalFunctor ObjectPurger::GetRemoveFiltersFunctor()
-{
-	return [](wfp::FilterEngine &engine)
-	{
-		const auto registry = MullvadGuids::DetailedRegistry();
-
-		// Resolve correct overload.
-		void (*deleter)(wfp::FilterEngine &, const GUID &) = wfp::ObjectDeleter::DeleteFilter;
-
-		RemoveRange(engine, deleter, registry.equal_range(WfpObjectType::Filter));
-	};
-}
-
-//static
 ObjectPurger::RemovalFunctor ObjectPurger::GetRemoveAllFunctor()
 {
 	return [](wfp::FilterEngine &engine)
