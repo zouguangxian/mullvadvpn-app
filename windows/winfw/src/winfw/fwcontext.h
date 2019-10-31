@@ -45,7 +45,11 @@ public:
 
 	using Ruleset = std::vector<std::unique_ptr<rules::IFirewallRule> >;
 
+	wfp::FilterEngine & engine() { return *m_engine; }
+
 private:
+
+	std::shared_ptr<wfp::FilterEngine> m_engine;
 
 	FwContext(const FwContext &) = delete;
 	FwContext &operator=(const FwContext &) = delete;

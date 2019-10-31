@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "fwcontext.h"
-#include "mullvadobjects.h"
 #include "objectpurger.h"
+#include "mullvadfilteringbase.h"
 #include "rules/blockall.h"
 #include "rules/ifirewallrule.h"
 #include "rules/permitdhcp.h"
@@ -16,6 +16,8 @@
 #include "rules/permitping.h"
 #include "rules/restrictdns.h"
 #include "libwfp/filterengine.h"
+#include "libwfp/ipaddress.h"
+#include "libwfp/objectinstaller.h"
 #include <functional>
 #include <stdexcept>
 #include <utility>
@@ -63,12 +65,11 @@ void AppendNetBlockedRules(FwContext::Ruleset &ruleset)
 FwContext::FwContext(uint32_t timeout)
 	: m_baseline(0)
 {
-	auto engine = wfp::FilterEngine::StandardSession(timeout);
+	m_engine = wfp::FilterEngine::StandardSession(timeout);
 
-	//
-	// Pass engine ownership to "session controller"
-	//
-	m_sessionController = std::make_unique<SessionController>(std::move(engine));
+	MullvadFilteringBase::Init(*m_engine);
+
+	m_sessionController = std::make_unique<SessionController>(m_engine);
 
 	if (false == applyBaseConfiguration())
 	{
@@ -81,12 +82,11 @@ FwContext::FwContext(uint32_t timeout)
 FwContext::FwContext(uint32_t timeout, const WinFwSettings &settings)
 	: m_baseline(0)
 {
-	auto engine = wfp::FilterEngine::StandardSession(timeout);
+	m_engine = wfp::FilterEngine::StandardSession(timeout);
 
-	//
-	// Pass engine ownership to "session controller"
-	//
-	m_sessionController = std::make_unique<SessionController>(std::move(engine));
+	MullvadFilteringBase::Init(*m_engine);
+
+	m_sessionController = std::make_unique<SessionController>(m_engine);
 
 	uint32_t checkpoint = 0;
 
@@ -223,7 +223,7 @@ bool FwContext::applyBlockedBaseConfiguration(const WinFwSettings &settings, uin
 	});
 }
 
-bool FwContext::applyCommonBaseConfiguration(SessionController &controller, wfp::FilterEngine &engine)
+bool FwContext::applyCommonBaseConfiguration(SessionController &, wfp::FilterEngine &engine)
 {
 	//
 	// Since we're using a standard WFP session we can make no assumptions
@@ -231,12 +231,7 @@ bool FwContext::applyCommonBaseConfiguration(SessionController &controller, wfp:
 	//
 	ObjectPurger::GetRemoveAllNonPersistentFunctor()(engine);
 
-	//
-	// Install structural objects
-	//
-	return controller.addProvider(*MullvadObjects::Provider())
-		&& controller.addSublayer(*MullvadObjects::SublayerWhitelist())
-		&& controller.addSublayer(*MullvadObjects::SublayerBlacklist());
+	return true;
 }
 
 bool FwContext::applyRuleset(const Ruleset &ruleset)

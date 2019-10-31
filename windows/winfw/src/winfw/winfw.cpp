@@ -2,6 +2,7 @@
 #include "winfw.h"
 #include "fwcontext.h"
 #include "objectpurger.h"
+#include "mullvadfilteringbase.h"
 #include <windows.h>
 #include <stdexcept>
 #include <optional>
@@ -266,6 +267,31 @@ WinFw_Reset()
 		}
 
 		return g_fwContext->reset();
+	}
+	catch (std::exception &err)
+	{
+		if (nullptr != g_errorSink)
+		{
+			g_errorSink(err.what(), g_errorContext);
+		}
+
+		return false;
+	}
+	catch (...)
+	{
+		return false;
+	}
+}
+
+WINFW_LINKAGE
+bool
+WINFW_API
+WinFw_Purge()
+{
+	try
+	{
+		// TODO: use existing context, if one exists
+		return ObjectPurger::Execute(ObjectPurger::GetRemoveAllFunctor());
 	}
 	catch (std::exception &err)
 	{

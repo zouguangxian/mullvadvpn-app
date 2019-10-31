@@ -70,8 +70,8 @@ void ValidateObject(const wfp::IIdentifiable &object)
 
 } // anonymous namespace
 
-SessionController::SessionController(std::unique_ptr<wfp::FilterEngine> &&engine)
-	: m_engine(std::move(engine))
+SessionController::SessionController(std::shared_ptr<wfp::FilterEngine> engine)
+	: m_engine(engine)
 	, m_activeTransaction(false)
 {
 }
