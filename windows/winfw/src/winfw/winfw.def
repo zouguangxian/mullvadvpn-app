@@ -8,3 +8,4 @@ WinFw_ApplyPolicyConnecting
 WinFw_ApplyPolicyConnected
 WinFw_ApplyPolicyBlocked
 WinFw_Reset
+WinFw_Purge

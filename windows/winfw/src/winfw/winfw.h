@@ -172,3 +172,15 @@ WINFW_LINKAGE
 bool
 WINFW_API
 WinFw_Reset();
+
+//
+// Purge:
+//
+// Clear the policy in effect as well as
+// all persistent filters.
+//
+extern "C"
+WINFW_LINKAGE
+bool
+WINFW_API
+WinFw_Purge();

@@ -12,7 +12,7 @@ class SessionController : public IObjectInstaller
 {
 public:
 
-	SessionController(std::unique_ptr<wfp::FilterEngine> &&engine);
+	SessionController(std::shared_ptr<wfp::FilterEngine> engine);
 	~SessionController();
 
 	bool addProvider(wfp::ProviderBuilder &providerBuilder) override;
@@ -54,7 +54,7 @@ private:
 
 	void rewindState(size_t steps);
 
-	std::unique_ptr<wfp::FilterEngine> m_engine;
+	std::shared_ptr<wfp::FilterEngine> m_engine;
 
 	std::vector<SessionRecord> m_records;
 	std::vector<SessionRecord> m_transactionRecords;

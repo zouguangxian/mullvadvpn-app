@@ -7,7 +7,6 @@
     <ClCompile Include="fwcontext.cpp" />
     <ClCompile Include="sessioncontroller.cpp" />
     <ClCompile Include="mullvadguids.cpp" />
-    <ClCompile Include="mullvadobjects.cpp" />
     <ClCompile Include="rules\permitlan.cpp">
       <Filter>rules</Filter>
     </ClCompile>
@@ -43,6 +42,7 @@
     <ClCompile Include="rules\permitndp.cpp">
       <Filter>rules</Filter>
     </ClCompile>
+    <ClCompile Include="mullvadfilteringbase.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -51,7 +51,6 @@
     <ClInclude Include="fwcontext.h" />
     <ClInclude Include="sessioncontroller.h" />
     <ClInclude Include="mullvadguids.h" />
-    <ClInclude Include="mullvadobjects.h" />
     <ClInclude Include="rules\ifirewallrule.h">
       <Filter>rules</Filter>
     </ClInclude>
@@ -93,6 +92,7 @@
     <ClInclude Include="rules\permitndp.h">
       <Filter>rules</Filter>
     </ClInclude>
+    <ClInclude Include="mullvadfilteringbase.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="rules">
