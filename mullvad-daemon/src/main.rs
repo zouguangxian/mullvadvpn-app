@@ -66,7 +66,25 @@ fn get_log_dir(config: &cli::Config) -> Result<Option<PathBuf>, String> {
 }
 
 #[cfg(windows)]
+#[allow(non_snake_case)]
+mod winfw {
+    extern "system" {
+        #[link_name = "WinFw_Purge"]
+        pub fn WinFw_Purge() -> bool;
+    }
+}
+
+#[cfg(windows)]
 fn run_platform(config: &cli::Config, log_dir: Option<PathBuf>) -> Result<(), String> {
+    if config.purge_filters {
+        return if unsafe { winfw::WinFw_Purge() } {
+            println!("Purged Mullvad filters.");
+            Ok(())
+        } else {
+            Err(String::from("Failed to purge Windows filtering setup"))
+        };
+    }
+
     if config.run_as_service {
         system_service::run()
     } else {

@@ -9,6 +9,7 @@ pub struct Config {
     pub log_stdout_timestamps: bool,
     pub run_as_service: bool,
     pub register_service: bool,
+    pub purge_filters: bool,
 }
 
 pub fn get_config() -> &'static Config {
@@ -33,12 +34,15 @@ pub fn create_config() -> Config {
     let run_as_service = cfg!(windows) && matches.is_present("run_as_service");
     let register_service = cfg!(windows) && matches.is_present("register_service");
 
+    let purge_filters = cfg!(windows) && matches.is_present("purge_filters");
+
     Config {
         log_level,
         log_to_file,
         log_stdout_timestamps,
         run_as_service,
         register_service,
+        purge_filters,
     }
 }
 
@@ -95,6 +99,10 @@ fn create_app() -> App<'static, 'static> {
             Arg::with_name("register_service")
                 .long("register-service")
                 .help("Register itself as a system service"),
+        ).arg(
+            Arg::with_name("purge_filters")
+                .long("purge-filters")
+                .help("Remove Mullvad setup and filters for WFP"),
         )
     } else {
         app
