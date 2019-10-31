@@ -794,6 +794,51 @@
 #
 ###############################################################################
 
+!macro customUnInit
+	Push $0
+	Push $1
+
+	# Check command line arguments
+	Var /GLOBAL FullUninstall
+
+	${GetParameters} $0
+	${GetOptions} $0 "/S" $1
+	${If} ${Errors}
+		Push 1
+		log::Initialize LOG_VOID
+	${Else}
+		Push 0
+		log::Initialize LOG_FILE
+	${EndIf}
+	Pop $FullUninstall
+
+	# If not ran silently
+	${If} $FullUninstall == 1
+		#
+		# Purge WFP filters
+		# This must succeed, or we lose Internet access even after rebooting,
+		# if the 'block-when-disconnected' option is used.
+		#
+		log::Log "Purging WFP filters"
+		nsExec::ExecToStack '"$INSTDIR\resources\mullvad-daemon.exe" --purge-filters'
+
+		Pop $0
+		Pop $1
+
+		${If} $0 != 0
+			log::Log "$1"
+			MessageBox MB_OK "Cannot remove WFP filters. Aborting."
+
+			Pop $0
+			Pop $1
+			Abort
+		${EndIf}
+	${EndIf}
+
+	Pop $1
+	Pop $0
+!macroend
+
 #
 # customRemoveFiles
 #
@@ -820,22 +865,6 @@
 	Pop $1
 
 	Sleep 1000
-
-	# Check command line arguments
-	Var /GLOBAL FullUninstall
-
-	${GetParameters} $0
-	${GetOptions} $0 "/S" $1
-	${If} ${Errors}
-		Push 1
-		log::Initialize LOG_VOID
-	${Else}
-		Push 0
-		log::Initialize LOG_FILE
-	${EndIf}
-	Pop $FullUninstall
-
-	log::Log "Running uninstaller for ${PRODUCT_NAME} ${VERSION}"
 
 	${RemoveCLIFromEnvironPath}
 
