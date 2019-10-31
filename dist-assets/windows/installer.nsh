@@ -809,6 +809,7 @@
 
 	# Discard return value
 	Pop $0
+	Pop $1
 
 	Sleep 5000
 
@@ -816,6 +817,7 @@
 
 	# Discard return value
 	Pop $0
+	Pop $1
 
 	Sleep 1000
 
