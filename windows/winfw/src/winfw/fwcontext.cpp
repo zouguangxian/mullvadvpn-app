@@ -15,7 +15,6 @@
 #include "rules/permitvpntunnelservice.h"
 #include "rules/permitping.h"
 #include "rules/restrictdns.h"
-#include "libwfp/transaction.h"
 #include "libwfp/filterengine.h"
 #include <functional>
 #include <stdexcept>
