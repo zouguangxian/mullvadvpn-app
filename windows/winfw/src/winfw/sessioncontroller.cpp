@@ -246,14 +246,20 @@ void SessionController::revert(uint32_t key)
 
 	size_t elementIndex = 0;
 
-	if (false == CheckpointKeyToIndex(m_transactionRecords, key, elementIndex))
+	if (0 != key)
 	{
-		throw std::runtime_error("Invalid checkpoint key (checkpoint may have been overwritten?)");
+		if (false == CheckpointKeyToIndex(m_transactionRecords, key, elementIndex))
+		{
+			throw std::runtime_error("Invalid checkpoint key (checkpoint may have been overwritten?)");
+		}
+
+		const size_t numRemove = m_transactionRecords.size() - (elementIndex + 1);
+		rewindState(numRemove);
 	}
-
-	const size_t numRemove = m_transactionRecords.size() - (elementIndex + 1);
-
-	rewindState(numRemove);
+	else
+	{
+		rewindState(m_transactionRecords.size());
+	}
 }
 
 void SessionController::reset()
