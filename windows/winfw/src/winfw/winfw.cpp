@@ -232,7 +232,7 @@ WinFw_Reset()
 	{
 		if (nullptr == g_fwContext)
 		{
-			return ObjectPurger::Execute(ObjectPurger::GetRemoveAllFunctor());
+			return ObjectPurger::Execute(ObjectPurger::GetRemoveAllNonPersistentFunctor());
 		}
 
 		return g_fwContext->reset();

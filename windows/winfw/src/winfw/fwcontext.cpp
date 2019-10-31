@@ -208,7 +208,7 @@ bool FwContext::applyCommonBaseConfiguration(SessionController &controller, wfp:
 	// Since we're using a standard WFP session we can make no assumptions
 	// about which objects are already installed since before.
 	//
-	ObjectPurger::GetRemoveAllFunctor()(engine);
+	ObjectPurger::GetRemoveAllNonPersistentFunctor()(engine);
 
 	//
 	// Install structural objects

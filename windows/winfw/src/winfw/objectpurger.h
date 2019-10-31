@@ -13,6 +13,7 @@ public:
 
 	using RemovalFunctor = std::function<void(wfp::FilterEngine &engine)>;
 
+	static RemovalFunctor GetRemoveAllNonPersistentFunctor();
 	static RemovalFunctor GetRemoveAllFunctor();
 
 	static bool Execute(RemovalFunctor f);
