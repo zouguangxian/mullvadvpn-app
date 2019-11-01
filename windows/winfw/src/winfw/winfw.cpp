@@ -1,8 +1,10 @@
 #include "stdafx.h"
+#include "libwfp/transaction.h"
 #include "winfw.h"
 #include "fwcontext.h"
 #include "objectpurger.h"
 #include "mullvadfilteringbase.h"
+#include "persistentblock.h"
 #include <windows.h>
 #include <stdexcept>
 #include <optional>
@@ -17,7 +19,7 @@ void * g_errorContext = nullptr;
 
 FwContext *g_fwContext = nullptr;
 
-std::optional<FwContext::PingableHosts> ConvertPingableHosts(const PingableHosts *pingableHosts)
+std::optional<FwContext::PingableHosts> ConvertPingableHosts(const PingableHosts* pingableHosts)
 {
 	if (nullptr == pingableHosts)
 	{
@@ -43,6 +45,34 @@ std::optional<FwContext::PingableHosts> ConvertPingableHosts(const PingableHosts
 	}
 
 	return converted;
+}
+
+bool g_blockOnExit = false;
+
+void EnablePersistentBlock()
+{
+	auto engine = wfp::FilterEngine::StandardSession(g_timeout);
+	if (!wfp::Transaction::Execute(*engine, [&engine]()
+	{
+		return PersistentBlock::Enable(*engine);
+	}))
+	{
+		throw std::runtime_error("Failed to create disconnect-block configuration.");
+	}
+}
+
+void DisablePersistentBlock()
+{
+	auto engine = wfp::FilterEngine::StandardSession(g_timeout);
+
+	if (!wfp::Transaction::Execute(*engine, [&engine]()
+	{
+		return PersistentBlock::Disable(*engine);
+	}
+	))
+	{
+		throw std::runtime_error("Failed to remove disconnect-block configuration.");
+	}
 }
 
 } // anonymous namespace
@@ -73,6 +103,9 @@ WinFw_Initialize(
 
 	try
 	{
+		// TODO: reuse engine session?
+		DisablePersistentBlock();
+
 		g_fwContext = new FwContext(g_timeout);
 	}
 	catch (std::exception &err)
@@ -120,6 +153,10 @@ WinFw_InitializeBlocked(
 
 	try
 	{
+		// TODO: reuse engine session?
+		DisablePersistentBlock();
+		g_blockOnExit = true;
+		
 		g_fwContext = new FwContext(g_timeout, settings);
 	}
 	catch (std::exception &err)
@@ -151,6 +188,18 @@ WinFw_Deinitialize()
 
 	delete g_fwContext;
 	g_fwContext = nullptr;
+
+	if (g_blockOnExit)
+	{
+		try
+		{
+			EnablePersistentBlock();
+		}
+		catch (...)
+		{
+			return false;
+		}
+	}
 
 	return true;
 }
@@ -237,7 +286,12 @@ WinFw_ApplyPolicyBlocked(
 
 	try
 	{
-		return g_fwContext->applyPolicyBlocked(settings);
+		if (g_fwContext->applyPolicyBlocked(settings))
+		{
+			g_blockOnExit = true;
+			return true;
+		}
+		return false;
 	}
 	catch (std::exception &err)
 	{
@@ -261,12 +315,21 @@ WinFw_Reset()
 {
 	try
 	{
+		bool success;
+		
 		if (nullptr == g_fwContext)
 		{
-			return ObjectPurger::Execute(ObjectPurger::GetRemoveAllNonPersistentFunctor());
+			success = ObjectPurger::Execute(ObjectPurger::GetRemoveAllFunctor());
 		}
-
-		return g_fwContext->reset();
+		else
+		{
+			success = g_fwContext->reset();
+		}
+		
+		if (success)
+		{
+			g_blockOnExit = false;
+		}
 	}
 	catch (std::exception &err)
 	{

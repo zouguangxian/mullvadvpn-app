@@ -46,6 +46,7 @@
       <Filter>rules</Filter>
     </ClCompile>
     <ClCompile Include="mullvadfilteringbase.cpp" />
+    <ClCompile Include="persistentblock.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -99,6 +100,7 @@
       <Filter>rules</Filter>
     </ClInclude>
     <ClInclude Include="mullvadfilteringbase.h" />
+    <ClInclude Include="persistentblock.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="rules">

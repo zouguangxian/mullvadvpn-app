@@ -3,6 +3,8 @@
 #include "mullvadguids.h"
 #include "libwfp/objectinstaller.h"
 #include "libwfp/objectexplorer.h"
+#include "libwfp/objectenumerator.h"
+#include "libwfp/objectdeleter.h"
 
 
 //static
@@ -88,4 +90,42 @@ void MullvadFilteringBase::Init(wfp::FilterEngine& engine)
 	}
 
 	// TODO: update existing objects (without deleting them, if possible)
+}
+
+void MullvadFilteringBase::Purge(wfp::FilterEngine &engine)
+{
+	//
+	// Delete all filters
+	//
+	wfp::ObjectEnumerator::Filters(
+		engine,
+		[&engine](const FWPM_FILTER0 &filter)
+		{
+			if (0 == memcmp(filter.providerKey, &MullvadGuids::Provider(), sizeof(GUID)))
+			{
+				wfp::ObjectDeleter::DeleteFilter(engine, filter.filterKey);
+			}
+			return true;
+		}
+	);
+
+	//
+	// Delete all sublayers
+	//
+	wfp::ObjectEnumerator::Sublayers(
+		engine,
+		[&engine](const FWPM_SUBLAYER0 &sublayer)
+		{
+			if (0 == memcmp(sublayer.providerKey, &MullvadGuids::Provider(), sizeof(GUID)))
+			{
+				wfp::ObjectDeleter::DeleteSublayer(engine, sublayer.subLayerKey);
+			}
+			return true;
+		}
+	);
+
+	//
+	// Delete provider
+	//
+	wfp::ObjectDeleter::DeleteProvider(engine, MullvadGuids::Provider());
 }

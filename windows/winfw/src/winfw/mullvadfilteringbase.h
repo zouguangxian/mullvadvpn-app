@@ -14,11 +14,12 @@ public:
 	MullvadFilteringBase() = delete;
 
 	static void Init(wfp::FilterEngine &engine); // safe to call more than once
-	//static void Purge(wfp::FilterEngine &engine); // TODO?
+	static void Purge(wfp::FilterEngine &engine);
 
-private:
 
 	static std::unique_ptr<wfp::ProviderBuilder> Provider();
 	static std::unique_ptr<wfp::SublayerBuilder> SublayerWhitelist();
 	static std::unique_ptr<wfp::SublayerBuilder> SublayerBlacklist();
+	
+private:
 };
