@@ -223,15 +223,19 @@ bool FwContext::applyBlockedBaseConfiguration(const WinFwSettings &settings, uin
 	});
 }
 
-bool FwContext::applyCommonBaseConfiguration(SessionController &, wfp::FilterEngine &engine)
+bool FwContext::applyCommonBaseConfiguration(SessionController &controller, wfp::FilterEngine &engine)
 {
 	//
 	// Since we're using a standard WFP session we can make no assumptions
-	// about which objects are already installed since before.
 	//
-	ObjectPurger::GetRemoveAllNonPersistentFunctor()(engine);
+	ObjectPurger::GetRemoveAllFunctor()(engine);
 
-	return true;
+	//
+	// Install structural objects
+	//
+	return controller.addProvider(*MullvadFilteringBase::Provider())
+		&& controller.addSublayer(*MullvadFilteringBase::SublayerWhitelist())
+		&& controller.addSublayer(*MullvadFilteringBase::SublayerBlacklist());
 }
 
 bool FwContext::applyRuleset(const Ruleset &ruleset)
