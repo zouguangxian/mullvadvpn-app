@@ -25,9 +25,6 @@ public:
 	static const GUID &SublayerWhitelist();
 	static const GUID &SublayerBlacklist();
 
-	static const GUID &PersistentFilterBlockAll_Outbound_Ipv4();
-	static const GUID &PersistentFilterBlockAll_Inbound_Ipv4();
-
 	static const GUID &FilterBlockAll_Outbound_Ipv4();
 	static const GUID &FilterBlockAll_Inbound_Ipv4();
 	static const GUID &FilterBlockAll_Outbound_Ipv6();

@@ -20,7 +20,6 @@
 #include "libwfp/objectinstaller.h"
 #include <functional>
 #include <stdexcept>
-#include <utility>
 
 namespace
 {
@@ -67,7 +66,7 @@ FwContext::FwContext(uint32_t timeout)
 {
 	m_engine = wfp::FilterEngine::StandardSession(timeout);
 
-	MullvadFilteringBase::Init(*m_engine);
+	//MullvadFilteringBase::Init(*m_engine);
 
 	m_sessionController = std::make_unique<SessionController>(m_engine);
 
@@ -84,7 +83,7 @@ FwContext::FwContext(uint32_t timeout, const WinFwSettings &settings)
 {
 	m_engine = wfp::FilterEngine::StandardSession(timeout);
 
-	MullvadFilteringBase::Init(*m_engine);
+	//MullvadFilteringBase::Init(*m_engine);
 
 	m_sessionController = std::make_unique<SessionController>(m_engine);
 

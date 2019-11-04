@@ -52,8 +52,10 @@ bool g_blockOnExit = false;
 void EnablePersistentBlock()
 {
 	auto engine = wfp::FilterEngine::StandardSession(g_timeout);
+	
 	if (!wfp::Transaction::Execute(*engine, [&engine]()
 	{
+		//MullvadFilteringBase::Init(*engine);
 		return PersistentBlock::Enable(*engine);
 	}))
 	{
@@ -67,7 +69,8 @@ void DisablePersistentBlock()
 
 	if (!wfp::Transaction::Execute(*engine, [&engine]()
 	{
-		return PersistentBlock::Disable(*engine);
+		bool result = PersistentBlock::Disable(*engine);
+		return result;
 	}
 	))
 	{
@@ -194,6 +197,14 @@ WinFw_Deinitialize()
 		try
 		{
 			EnablePersistentBlock();
+		}
+		catch (const std::exception &err)
+		{
+			if (nullptr != g_errorSink)
+			{
+				g_errorSink(err.what(), g_errorContext);
+			}
+			return false;
 		}
 		catch (...)
 		{
@@ -330,6 +341,7 @@ WinFw_Reset()
 		{
 			g_blockOnExit = false;
 		}
+		return success;
 	}
 	catch (std::exception &err)
 	{

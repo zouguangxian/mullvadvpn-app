@@ -15,7 +15,7 @@ std::unique_ptr<wfp::ProviderBuilder> MullvadFilteringBase::Provider()
 	(*builder)
 		.name(L"Mullvad VPN")
 		.description(L"Mullvad VPN firewall integration")
-		.persistent()
+		//.persistent()
 		.key(MullvadGuids::Provider());
 
 	return builder;
@@ -31,7 +31,7 @@ std::unique_ptr<wfp::SublayerBuilder> MullvadFilteringBase::SublayerWhitelist()
 		.description(L"Filters that permit traffic")
 		.key(MullvadGuids::SublayerWhitelist())
 		.provider(MullvadGuids::Provider())
-		.persistent()
+		//.persistent()
 		.weight(MAXUINT16);
 
 	return builder;
@@ -47,7 +47,7 @@ std::unique_ptr<wfp::SublayerBuilder> MullvadFilteringBase::SublayerBlacklist()
 		.description(L"Filters that block traffic")
 		.key(MullvadGuids::SublayerBlacklist())
 		.provider(MullvadGuids::Provider())
-		.persistent()
+		//.persistent()
 		.weight(MAXUINT16 - 1);
 
 	return builder;
@@ -57,6 +57,7 @@ std::unique_ptr<wfp::SublayerBuilder> MullvadFilteringBase::SublayerBlacklist()
 void MullvadFilteringBase::Init(wfp::FilterEngine& engine)
 {
 	const auto providerBuilder = Provider();
+	providerBuilder->persistent();
 
 	if (!wfp::ObjectExplorer::GetProvider(
 		engine,
@@ -68,6 +69,7 @@ void MullvadFilteringBase::Init(wfp::FilterEngine& engine)
 	}
 
 	const auto whitelistBuilder = SublayerWhitelist();
+	whitelistBuilder->persistent();
 
 	if (!wfp::ObjectExplorer::GetSublayer(
 		engine,
@@ -76,17 +78,6 @@ void MullvadFilteringBase::Init(wfp::FilterEngine& engine)
 	))
 	{
 		wfp::ObjectInstaller::AddSublayer(engine, *whitelistBuilder);
-	}
-
-	const auto blacklistBuilder = SublayerBlacklist();
-
-	if (!wfp::ObjectExplorer::GetSublayer(
-		engine,
-		blacklistBuilder->id(),
-		[](const FWPM_SUBLAYER0&) { return true; }
-	))
-	{
-		wfp::ObjectInstaller::AddSublayer(engine, *blacklistBuilder);
 	}
 
 	// TODO: update existing objects (without deleting them, if possible)

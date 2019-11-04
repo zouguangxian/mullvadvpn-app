@@ -122,36 +122,6 @@ const GUID &MullvadGuids::SublayerBlacklist()
 }
 
 //static
-const GUID& MullvadGuids::PersistentFilterBlockAll_Outbound_Ipv4()
-{
-	// c2114024-1274-4333-9169-670caff8a987
-	static const GUID g =
-	{
-		0xc2114024,
-		0x1274,
-		0x4333,
-		{ 0x91, 0x69, 0x67, 0x0c, 0xaf, 0xf8, 0xa9, 0x87 }
-	};
-
-	return g;
-}
-
-//static
-const GUID& MullvadGuids::PersistentFilterBlockAll_Inbound_Ipv4()
-{
-	// c31d3889-2c5e-42b3-9617-676e4e354ae7
-	static const GUID g =
-	{
-		0xc31d3889,
-		0x2c5e,
-		0x42b3,
-		{ 0x96, 0x17, 0x67, 0x6e, 0x4e, 0x35, 0x4a, 0xe7 }
-	};
-
-	return g;
-}
-
-//static
 const GUID &MullvadGuids::FilterBlockAll_Outbound_Ipv4()
 {
 	static const GUID g =
