@@ -198,6 +198,7 @@ impl TunnelStateMachine {
         cache_dir: impl AsRef<Path>,
         commands: mpsc::UnboundedReceiver<TunnelCommand>,
     ) -> Result<Self, Error> {
+        let block_on_boot = true; // FIXME
         let args = if block_when_disconnected {
             FirewallArguments {
                 initialize_blocked: true,
@@ -215,6 +216,7 @@ impl TunnelStateMachine {
             firewall,
             dns_monitor,
             allow_lan,
+            block_on_boot,
             block_when_disconnected,
             is_offline,
             tunnel_parameters_generator: Box::new(tunnel_parameters_generator),
@@ -299,6 +301,9 @@ struct SharedTunnelStateValues {
     dns_monitor: DnsMonitor,
     /// Should LAN access be allowed outside the tunnel.
     allow_lan: bool,
+    #[cfg(windows)]
+    /// Should network access be allowed while the OS is starting up.
+    block_on_boot: bool,
     /// Should network access be allowed when in the disconnected state.
     block_when_disconnected: bool,
     /// True when the computer is known to be offline.
