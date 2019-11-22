@@ -102,7 +102,7 @@ extern "C"
 WINFW_LINKAGE
 bool
 WINFW_API
-WinFw_Deinitialize();
+WinFw_Deinitialize(bool addBootTimeFilters);
 
 //
 // PingableHosts:

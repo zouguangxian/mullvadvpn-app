@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "permitdhcp.h"
 #include "winfw/mullvadguids.h"
+#include "winfw/mullvadfilteringbase.h"
 #include "libwfp/filterbuilder.h"
 #include "libwfp/conditionbuilder.h"
 #include "libwfp/ipaddress.h"
@@ -48,9 +49,9 @@ bool PermitDhcp::applyIpv4(IObjectInstaller &objectInstaller) const
 		.key(MullvadGuids::FilterPermitDhcp_Outbound_Request_Ipv4())
 		.name(L"Permit outbound DHCP request (IPv4)")
 		.description(L"This filter is part of a rule that permits DHCP client traffic")
-		.provider(MullvadGuids::Provider())
+		.provider(MullvadFilteringBase::ProviderGuid())
 		.layer(FWPM_LAYER_ALE_AUTH_CONNECT_V4)
-		.sublayer(MullvadGuids::SublayerWhitelist())
+		.sublayer(MullvadFilteringBase::SublayerWhitelistGuid())
 		.weight(wfp::FilterBuilder::WeightClass::Max)
 		.permit();
 

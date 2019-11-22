@@ -47,34 +47,23 @@ std::optional<FwContext::PingableHosts> ConvertPingableHosts(const PingableHosts
 	return converted;
 }
 
-bool g_blockOnExit = false;
-
-void EnablePersistentBlock()
-{
-	auto engine = wfp::FilterEngine::StandardSession(g_timeout);
-	
-	if (!wfp::Transaction::Execute(*engine, [&engine]()
-	{
-		//MullvadFilteringBase::Init(*engine);
-		return PersistentBlock::Enable(*engine);
-	}))
-	{
-		throw std::runtime_error("Failed to create disconnect-block configuration.");
-	}
-}
-
-void DisablePersistentBlock()
+void InitializeWfpState()
 {
 	auto engine = wfp::FilterEngine::StandardSession(g_timeout);
 
+	// Reset boot-time and persistent objects, if they exist
 	if (!wfp::Transaction::Execute(*engine, [&engine]()
 	{
-		bool result = PersistentBlock::Disable(*engine);
-		return result;
+		MullvadFilteringBase::Init(*engine);
+		if (!PersistentBlock::Disable(*engine))
+		{
+			return false;
+		}
+		return true;
 	}
 	))
 	{
-		throw std::runtime_error("Failed to remove disconnect-block configuration.");
+		throw std::runtime_error("Failed to remove boot-time configuration.");
 	}
 }
 
@@ -106,9 +95,7 @@ WinFw_Initialize(
 
 	try
 	{
-		// TODO: reuse engine session?
-		DisablePersistentBlock();
-
+		InitializeWfpState();
 		g_fwContext = new FwContext(g_timeout);
 	}
 	catch (std::exception &err)
@@ -156,10 +143,7 @@ WinFw_InitializeBlocked(
 
 	try
 	{
-		// TODO: reuse engine session?
-		DisablePersistentBlock();
-		g_blockOnExit = true;
-		
+		InitializeWfpState();
 		g_fwContext = new FwContext(g_timeout, settings);
 	}
 	catch (std::exception &err)
@@ -182,37 +166,44 @@ WinFw_InitializeBlocked(
 WINFW_LINKAGE
 bool
 WINFW_API
-WinFw_Deinitialize()
+WinFw_Deinitialize(bool addBootTimeFilters)
 {
-	if (nullptr == g_fwContext)
-	{
-		return true;
-	}
+	bool status = false;
 
-	delete g_fwContext;
-	g_fwContext = nullptr;
-
-	if (g_blockOnExit)
+	if (addBootTimeFilters)
 	{
 		try
 		{
-			EnablePersistentBlock();
+			const auto engine = wfp::FilterEngine::StandardSession(g_timeout);
+			status = wfp::Transaction::Execute(*engine, [&engine]()
+			{
+				return PersistentBlock::Enable(*engine);
+			});
 		}
-		catch (const std::exception &err)
+		catch (std::exception & err)
 		{
 			if (nullptr != g_errorSink)
 			{
 				g_errorSink(err.what(), g_errorContext);
 			}
-			return false;
-		}
-		catch (...)
-		{
-			return false;
+
+			status = false;
 		}
 	}
+	else
+	{
+		status = true;
+	}
 
-	return true;
+	if (nullptr == g_fwContext)
+	{
+		return status;
+	}
+
+	delete g_fwContext;
+	g_fwContext = nullptr;
+
+	return status;
 }
 
 WINFW_LINKAGE
@@ -297,12 +288,7 @@ WinFw_ApplyPolicyBlocked(
 
 	try
 	{
-		if (g_fwContext->applyPolicyBlocked(settings))
-		{
-			g_blockOnExit = true;
-			return true;
-		}
-		return false;
+		return g_fwContext->applyPolicyBlocked(settings);
 	}
 	catch (std::exception &err)
 	{
@@ -326,22 +312,14 @@ WinFw_Reset()
 {
 	try
 	{
-		bool success;
-		
 		if (nullptr == g_fwContext)
 		{
-			success = ObjectPurger::Execute(ObjectPurger::GetRemoveAllFunctor());
+			return ObjectPurger::Execute(ObjectPurger::GetRemoveAllFunctor());
 		}
 		else
 		{
-			success = g_fwContext->reset();
+			return g_fwContext->reset();
 		}
-		
-		if (success)
-		{
-			g_blockOnExit = false;
-		}
-		return success;
 	}
 	catch (std::exception &err)
 	{
@@ -365,8 +343,9 @@ WinFw_Purge()
 {
 	try
 	{
-		// TODO: use existing context, if one exists
-		return ObjectPurger::Execute(ObjectPurger::GetRemoveAllFunctor());
+		const auto session = wfp::FilterEngine::StandardSession();
+		MullvadFilteringBase::Purge(*session);
+		return true;
 	}
 	catch (std::exception &err)
 	{

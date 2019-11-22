@@ -98,7 +98,6 @@ ObjectPurger::RemovalFunctor ObjectPurger::GetRemoveAllFunctor()
 
 		RemoveRange(engine, deleter, registry.equal_range(WfpObjectType::Filter));
 		RemoveRange(engine, wfp::ObjectDeleter::DeleteSublayer, registry.equal_range(WfpObjectType::Sublayer));
-		RemoveRange(engine, wfp::ObjectDeleter::DeleteProvider, registry.equal_range(WfpObjectType::Provider));
 	};
 }
 

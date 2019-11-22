@@ -66,8 +66,6 @@ FwContext::FwContext(uint32_t timeout)
 {
 	m_engine = wfp::FilterEngine::StandardSession(timeout);
 
-	//MullvadFilteringBase::Init(*m_engine);
-
 	m_sessionController = std::make_unique<SessionController>(m_engine);
 
 	if (false == applyBaseConfiguration())
@@ -82,8 +80,6 @@ FwContext::FwContext(uint32_t timeout, const WinFwSettings &settings)
 	: m_baseline(0)
 {
 	m_engine = wfp::FilterEngine::StandardSession(timeout);
-
-	//MullvadFilteringBase::Init(*m_engine);
 
 	m_sessionController = std::make_unique<SessionController>(m_engine);
 
@@ -229,12 +225,7 @@ bool FwContext::applyCommonBaseConfiguration(SessionController &controller, wfp:
 	//
 	ObjectPurger::GetRemoveAllFunctor()(engine);
 
-	//
-	// Install structural objects
-	//
-	return controller.addProvider(*MullvadFilteringBase::Provider())
-		&& controller.addSublayer(*MullvadFilteringBase::SublayerWhitelist())
-		&& controller.addSublayer(*MullvadFilteringBase::SublayerBlacklist());
+	return controller.addSublayer(*MullvadFilteringBase::SublayerBlacklist());
 }
 
 bool FwContext::applyRuleset(const Ruleset &ruleset)

@@ -71,16 +71,6 @@ const GUID& PersistentBlock::BootTimeFilterBlockAll_Inbound_Ipv4()
 
 bool PersistentBlock::Enable(wfp::FilterEngine& engine)
 {
-	if (!wfp::ObjectInstaller::AddProvider(engine, *MullvadFilteringBase::Provider()))
-	{
-		return false;
-	}
-
-	if (!wfp::ObjectInstaller::AddSublayer(engine, *MullvadFilteringBase::SublayerWhitelist()))
-	{
-		return false;
-	}
-
 	wfp::FilterBuilder filterBuilder;
 
 	//
@@ -93,9 +83,9 @@ bool PersistentBlock::Enable(wfp::FilterEngine& engine)
 		.key(PersistentFilterBlockAll_Outbound_Ipv4())
 		.name(L"Block all outbound connections (IPv4)")
 		.description(L"This filter is part of a rule that restricts inbound and outbound traffic")
-		.provider(MullvadGuids::Provider())
+		.provider(MullvadFilteringBase::ProviderGuid())
 		.layer(FWPM_LAYER_ALE_AUTH_CONNECT_V4)
-		.sublayer(MullvadGuids::SublayerWhitelist())
+		.sublayer(MullvadFilteringBase::SublayerWhitelistGuid())
 		.weight(wfp::FilterBuilder::WeightClass::Min)
 		.persistent()
 		.block();
@@ -120,7 +110,7 @@ bool PersistentBlock::Enable(wfp::FilterEngine& engine)
 	// TODO: add IPv6 filters
 
 	//
-	// Create boot-time filters (before BFE starts)
+	// Create boot-time filters (applied before BFE starts)
 	//
 
 	// Block IPv4 traffic
@@ -129,7 +119,7 @@ bool PersistentBlock::Enable(wfp::FilterEngine& engine)
 		.key(BootTimeFilterBlockAll_Outbound_Ipv4())
 		.name(L"Block all outbound connections (IPv4)")
 		.layer(FWPM_LAYER_ALE_AUTH_CONNECT_V4)
-		.sublayer(MullvadGuids::SublayerWhitelist())
+		.sublayer(MullvadFilteringBase::SublayerWhitelistGuid())
 		.weight(wfp::FilterBuilder::WeightClass::Min)
 		.boottime();
 
@@ -163,12 +153,6 @@ bool PersistentBlock::Disable(wfp::FilterEngine& engine)
 	wfp::ObjectDeleter::DeleteFilter(engine, BootTimeFilterBlockAll_Outbound_Ipv4());
 
 	// TODO: remove IPv6 filters
-
-	// TODO: remove boot-time filters
-
-	wfp::ObjectDeleter::DeleteSublayer(engine, MullvadGuids::SublayerWhitelist());
-	
-	wfp::ObjectDeleter::DeleteProvider(engine, MullvadGuids::Provider());
 
 	return true;
 }
