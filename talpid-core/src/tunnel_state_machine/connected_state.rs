@@ -152,6 +152,7 @@ impl ConnectedState {
             Ok(TunnelCommand::Block(reason)) => {
                 self.disconnect(shared_values, AfterDisconnect::Block(reason))
             }
+            Ok(TunnelCommand::Quit) => Finished,
         }
     }
 

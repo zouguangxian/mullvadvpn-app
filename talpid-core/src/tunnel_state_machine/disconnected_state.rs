@@ -79,6 +79,7 @@ impl TunnelState for DisconnectedState {
             Ok(TunnelCommand::Block(reason)) => {
                 NewState(BlockedState::enter(shared_values, reason))
             }
+            Ok(TunnelCommand::Quit) => Finished,
             Ok(_) => SameState(self),
             Err(_) => Finished,
         }

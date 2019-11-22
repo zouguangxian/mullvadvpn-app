@@ -59,6 +59,14 @@ pub enum Error {
     SendStateChange,
 }
 
+/// A channel for sending tunnel commands.
+pub struct TunnelThreadHandle {
+    /// Tunnel SM thread join handle.
+    pub join_handle: thread::JoinHandle<()>,
+    /// Channel for sending tunnel commands.
+    pub tunnel_command_tx: mpsc::UnboundedSender<TunnelCommand>
+}
+
 /// Spawn the tunnel state machine thread, returning a channel for sending tunnel commands.
 pub fn spawn<P, T>(
     allow_lan: bool,
@@ -69,7 +77,7 @@ pub fn spawn<P, T>(
     resource_dir: PathBuf,
     cache_dir: P,
     state_change_listener: IntoSender<TunnelStateTransition, T>,
-) -> Result<mpsc::UnboundedSender<TunnelCommand>, Error>
+) -> Result<TunnelThreadHandle, Error>
 where
     P: AsRef<Path> + Send + 'static,
     T: From<TunnelStateTransition> + Send + 'static,
@@ -80,7 +88,7 @@ where
     let is_offline = offline_monitor.is_offline();
 
     let (startup_result_tx, startup_result_rx) = sync_mpsc::channel();
-    thread::spawn(move || {
+    let join_handle = thread::spawn(move || {
         match create_event_loop(
             allow_lan,
             block_when_disconnected,
@@ -112,12 +120,14 @@ where
             }
         }
         std::mem::drop(offline_monitor);
+        log::info!("Stopping tunnel state machine thread.");
     });
 
-    startup_result_rx
+    let sender = startup_result_rx
         .recv()
         .expect("Failed to start tunnel state machine thread")
-        .map(|_| command_tx)
+        .map(|_| command_tx)?;
+    Ok(TunnelThreadHandle { join_handle, tunnel_command_tx: sender })
 }
 
 fn create_event_loop<T>(
@@ -171,6 +181,8 @@ pub enum TunnelCommand {
     Disconnect,
     /// Disconnect any open tunnel and block all network access
     Block(BlockReason),
+    /// Close thread gracefully.
+    Quit,
 }
 
 /// Asynchronous handling of the tunnel state machine.

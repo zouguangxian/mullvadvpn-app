@@ -67,6 +67,7 @@ impl DisconnectingState {
                 Ok(TunnelCommand::Connect) => AfterDisconnect::Reconnect(0),
                 Ok(TunnelCommand::Disconnect) => AfterDisconnect::Nothing,
                 Ok(TunnelCommand::Block(new_reason)) => AfterDisconnect::Block(new_reason),
+                Ok(TunnelCommand::Quit) => AfterDisconnect::Block(reason), // FIXME
                 Err(_) => AfterDisconnect::Block(reason),
             },
             AfterDisconnect::Reconnect(retry_attempt) => match event {
@@ -89,6 +90,7 @@ impl DisconnectingState {
                 Ok(TunnelCommand::Connect) => AfterDisconnect::Reconnect(retry_attempt),
                 Ok(TunnelCommand::Disconnect) | Err(_) => AfterDisconnect::Nothing,
                 Ok(TunnelCommand::Block(reason)) => AfterDisconnect::Block(reason),
+                Ok(TunnelCommand::Quit) => AfterDisconnect::Nothing,
             },
         };
 

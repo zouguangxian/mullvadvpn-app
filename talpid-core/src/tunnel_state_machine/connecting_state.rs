@@ -233,6 +233,7 @@ impl ConnectingState {
                     AfterDisconnect::Block(reason),
                 ),
             )),
+            Ok(TunnelCommand::Quit) => Finished,
         }
     }
 

@@ -248,6 +248,7 @@ pub trait EventListener {
 }
 
 pub struct Daemon<L: EventListener = ManagementInterfaceEventBroadcaster> {
+    tunnel_thread_join_handle: thread::JoinHandle<()>,
     tunnel_command_tx: SyncUnboundedSender<TunnelCommand>,
     tunnel_state: TunnelState,
     target_state: TargetState,
@@ -426,7 +427,7 @@ where
         let tunnel_parameters_generator = MullvadTunnelParametersGenerator {
             tx: internal_event_tx.clone(),
         };
-        let tunnel_command_tx = tunnel_state_machine::spawn(
+        let tunnel_thread_handle = tunnel_state_machine::spawn(
             settings.get_allow_lan(),
             settings.get_block_when_disconnected(),
             tunnel_parameters_generator,
@@ -449,7 +450,8 @@ where
         relay_selector.update();
 
         let mut daemon = Daemon {
-            tunnel_command_tx: Sink::wait(tunnel_command_tx),
+            tunnel_thread_join_handle: tunnel_thread_handle.join_handle,
+            tunnel_command_tx: Sink::wait(tunnel_thread_handle.tunnel_command_tx),
             tunnel_state: TunnelState::Disconnected,
             target_state: TargetState::Unsecured,
             state: DaemonExecutionState::Running,
@@ -510,7 +512,12 @@ where
 
     /// Shuts down the daemon without shutting down the underlying management interface event
     /// listener and the shutdown callbacks
-    fn shutdown(self) -> (L, Vec<Box<dyn FnOnce()>>) {
+    fn shutdown(mut self) -> (L, Vec<Box<dyn FnOnce()>>) {
+        self.tunnel_command_tx.send(TunnelCommand::Quit)
+            .expect("Failed to send quit command to the tunnel");
+        self.tunnel_thread_join_handle.join()
+            .expect("Failed to close tunnel state machine thread");
+
         let Daemon {
             event_listener,
             shutdown_callbacks,
