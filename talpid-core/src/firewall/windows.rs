@@ -44,7 +44,9 @@ pub enum Error {
 const WINFW_TIMEOUT_SECONDS: u32 = 2;
 
 /// The Windows implementation for the firewall and DNS.
-pub struct Firewall(());
+pub struct Firewall {
+    boottime_filters_on_exit: bool,
+}
 
 extern "system" fn error_sink(msg: *const c_char, _ctx: *mut c_void) {
     use std::ffi::CStr;
@@ -78,7 +80,7 @@ impl FirewallT for Firewall {
         }
 
         trace!("Successfully initialized windows firewall module");
-        Ok(Firewall(()))
+        Ok(Firewall { boottime_filters_on_exit: args.block_on_boot })
     }
 
     fn apply_policy(&mut self, policy: FirewallPolicy) -> Result<(), Self::Error> {
@@ -116,11 +118,21 @@ impl FirewallT for Firewall {
         unsafe { WinFw_Reset().into_result() }?;
         Ok(())
     }
+
+    fn apply_boot_policy(&mut self) -> Result<(), Self::Error> {
+        self.boottime_filters_on_exit = true;
+        Ok(())
+    }
+
+    fn reset_boot_policy(&mut self) -> Result<(), Self::Error> {
+        self.boottime_filters_on_exit = false;
+        Ok(())
+    }
 }
 
 impl Drop for Firewall {
     fn drop(&mut self) {
-        if unsafe { WinFw_Deinitialize().into_result().is_ok() } {
+        if unsafe { WinFw_Deinitialize(self.boottime_filters_on_exit).into_result().is_ok() } {
             trace!("Successfully deinitialized windows firewall module");
         } else {
             error!("Failed to deinitialize windows firewall module");
@@ -313,7 +325,9 @@ mod winfw {
         ) -> InitializationResult;
 
         #[link_name = "WinFw_Deinitialize"]
-        pub fn WinFw_Deinitialize() -> DeinitializationResult;
+        pub fn WinFw_Deinitialize(
+            addBootTimeFilters: bool
+        ) -> DeinitializationResult;
 
         #[link_name = "WinFw_ApplyPolicyConnecting"]
         pub fn WinFw_ApplyPolicyConnecting(

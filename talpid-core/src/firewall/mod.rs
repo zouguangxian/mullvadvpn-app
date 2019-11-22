@@ -192,6 +192,9 @@ pub struct FirewallArguments {
     pub initialize_blocked: bool,
     /// This argument is required for the blocked state to configure the firewall correctly.
     pub allow_lan: Option<bool>,
+    /// Determines whether traffic should be blocked after exit until the firewall is
+    /// re-initialized.
+    pub block_on_boot: bool,
 }
 
 impl Firewall {
@@ -215,6 +218,18 @@ impl Firewall {
         log::info!("Resetting firewall policy");
         self.inner.reset_policy()
     }
+
+    /// Applies filters that block traffic as soon as networking is available.
+    pub fn apply_boot_policy(&mut self) -> Result<(), Error> {
+        log::info!("Enabling boot-time network filters");
+        self.inner.apply_boot_policy()
+    }
+
+    /// Removes early boot-time filters.
+    pub fn reset_boot_policy(&mut self) -> Result<(), Error> {
+        log::info!("Disabling boot-time network filters");
+        self.inner.reset_boot_policy()
+    }
 }
 
 /// Abstract firewall interaction trait. Used by the OS specific implementations.
@@ -231,4 +246,10 @@ trait FirewallT: Sized {
     /// Revert the system firewall state to what it was before this instance started
     /// modifying the system.
     fn reset_policy(&mut self) -> Result<(), Self::Error>;
+
+    /// Enable boot-time filters
+    fn apply_boot_policy(&mut self) -> Result<(), Self::Error>;
+
+    /// Disable boot-time filters
+    fn reset_boot_policy(&mut self) -> Result<(), Self::Error>;
 }

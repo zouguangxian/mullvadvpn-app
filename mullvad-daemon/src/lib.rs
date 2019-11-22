@@ -434,6 +434,7 @@ where
         let tunnel_command_tx = tunnel_state_machine::spawn(
             settings.get_allow_lan(),
             settings.get_block_when_disconnected(),
+            true, // FIXME: block_on_boot
             tunnel_parameters_generator,
             tun_provider,
             log_dir,

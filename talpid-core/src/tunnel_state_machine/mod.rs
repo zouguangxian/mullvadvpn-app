@@ -63,6 +63,7 @@ pub enum Error {
 pub fn spawn<P, T>(
     allow_lan: bool,
     block_when_disconnected: bool,
+    block_on_boot: bool,
     tunnel_parameters_generator: impl TunnelParametersGenerator,
     tun_provider: impl TunProvider,
     log_dir: Option<PathBuf>,
@@ -85,6 +86,7 @@ where
         match create_event_loop(
             allow_lan,
             block_when_disconnected,
+            block_on_boot,
             is_offline,
             tunnel_parameters_generator,
             tun_provider,
@@ -124,6 +126,7 @@ where
 fn create_event_loop<T>(
     allow_lan: bool,
     block_when_disconnected: bool,
+    block_on_boot: bool,
     is_offline: bool,
     tunnel_parameters_generator: impl TunnelParametersGenerator,
     tun_provider: impl TunProvider,
@@ -140,6 +143,7 @@ where
     let state_machine = TunnelStateMachine::new(
         allow_lan,
         block_when_disconnected,
+        block_on_boot,
         is_offline,
         tunnel_parameters_generator,
         tun_provider,
@@ -190,6 +194,7 @@ impl TunnelStateMachine {
     fn new(
         allow_lan: bool,
         block_when_disconnected: bool,
+        block_on_boot: bool,
         is_offline: bool,
         tunnel_parameters_generator: impl TunnelParametersGenerator,
         tun_provider: impl TunProvider,
@@ -198,16 +203,18 @@ impl TunnelStateMachine {
         cache_dir: impl AsRef<Path>,
         commands: mpsc::UnboundedReceiver<TunnelCommand>,
     ) -> Result<Self, Error> {
-        let block_on_boot = true; // FIXME
+        //let block_on_boot = true; // FIXME
         let args = if block_when_disconnected {
             FirewallArguments {
                 initialize_blocked: true,
                 allow_lan: Some(allow_lan),
+                block_on_boot,
             }
         } else {
             FirewallArguments {
                 initialize_blocked: false,
                 allow_lan: None,
+                block_on_boot,
             }
         };
         let firewall = Firewall::new(args).map_err(Error::InitFirewallError)?;
@@ -216,7 +223,7 @@ impl TunnelStateMachine {
             firewall,
             dns_monitor,
             allow_lan,
-            block_on_boot,
+            //block_on_boot,
             block_when_disconnected,
             is_offline,
             tunnel_parameters_generator: Box::new(tunnel_parameters_generator),
@@ -303,7 +310,7 @@ struct SharedTunnelStateValues {
     allow_lan: bool,
     #[cfg(windows)]
     /// Should network access be allowed while the OS is starting up.
-    block_on_boot: bool,
+    //block_on_boot: bool,
     /// Should network access be allowed when in the disconnected state.
     block_when_disconnected: bool,
     /// True when the computer is known to be offline.
