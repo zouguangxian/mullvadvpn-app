@@ -29,7 +29,7 @@ use crate::management_interface::{
 use futures::{
     executor,
     future::{self, Executor},
-    sync::{mpsc::UnboundedSender, oneshot},
+    sync::oneshot,
     Future,
 };
 use log::{debug, error, info, warn};
@@ -60,7 +60,9 @@ use std::{
 use talpid_core::{
     mpsc::IntoSender,
     tunnel::tun_provider::{PlatformTunProvider, TunProvider},
-    tunnel_state_machine::{self, TunnelCommand, TunnelParametersGenerator},
+    tunnel_state_machine::{
+        self, TunnelCommand, TunnelParametersGenerator, TunnelStateMachineThreadState,
+    },
 };
 use talpid_types::{
     net::{openvpn, TransportProtocol, TunnelParameters},
@@ -70,6 +72,8 @@ use talpid_types::{
 
 #[path = "wireguard.rs"]
 mod wireguard;
+
+const TUNNEL_SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(5);
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -253,7 +257,7 @@ pub trait EventListener {
 }
 
 pub struct Daemon<L: EventListener = ManagementInterfaceEventBroadcaster> {
-    tunnel_command_tx: Arc<UnboundedSender<TunnelCommand>>,
+    tunnel_thread_state: TunnelStateMachineThreadState,
     tunnel_state: TunnelState,
     target_state: TargetState,
     state: DaemonExecutionState,
@@ -431,7 +435,7 @@ where
         let tunnel_parameters_generator = MullvadTunnelParametersGenerator {
             tx: internal_event_tx.clone(),
         };
-        let tunnel_command_tx = tunnel_state_machine::spawn(
+        let tunnel_thread_state = tunnel_state_machine::spawn(
             settings.get_allow_lan(),
             settings.get_block_when_disconnected(),
             true, // FIXME: block_on_boot
@@ -455,7 +459,7 @@ where
         relay_selector.update();
 
         let mut daemon = Daemon {
-            tunnel_command_tx,
+            tunnel_thread_state,
             tunnel_state: TunnelState::Disconnected,
             target_state: TargetState::Unsecured,
             state: DaemonExecutionState::Running,
@@ -518,10 +522,18 @@ where
     /// listener and the shutdown callbacks
     fn shutdown(self) -> (L, Vec<Box<dyn FnOnce()>>) {
         let Daemon {
+            tunnel_thread_state,
             event_listener,
             shutdown_callbacks,
             ..
         } = self;
+
+        let TunnelStateMachineThreadState { shutdown_rx, .. } = tunnel_thread_state;
+
+        if let Err(_) = shutdown_rx.recv_timeout(TUNNEL_SHUTDOWN_TIMEOUT) {
+            log::info!("Tunnel shutdown channel timed out.");
+        }
+
         (event_listener, shutdown_callbacks)
     }
 
@@ -1497,7 +1509,7 @@ where
     }
 
     fn send_tunnel_command(&mut self, command: TunnelCommand) {
-        let mut sink = executor::spawn(Arc::make_mut(&mut self.tunnel_command_tx));
+        let mut sink = executor::spawn(Arc::make_mut(&mut self.tunnel_thread_state.command_tx));
         sink.wait_send(command)
             .expect("Tunnel state machine has stopped");
     }

@@ -59,6 +59,16 @@ pub enum Error {
     SendStateChange,
 }
 
+/// Contains data for tunnel state machine thread.
+pub struct TunnelStateMachineThreadState {
+    /// Sender for tunnel commands.
+    pub command_tx: Arc<mpsc::UnboundedSender<TunnelCommand>>,
+
+    /// Receiver for a channel that is closed when the
+    /// tunnel state machine thread exits.
+    pub shutdown_rx: sync_mpsc::Receiver<Result<(), Error>>,
+}
+
 /// Spawn the tunnel state machine thread, returning a channel for sending tunnel commands.
 pub fn spawn<P, T>(
     allow_lan: bool,
@@ -70,7 +80,7 @@ pub fn spawn<P, T>(
     resource_dir: PathBuf,
     cache_dir: P,
     state_change_listener: IntoSender<TunnelStateTransition, T>,
-) -> Result<Arc<mpsc::UnboundedSender<TunnelCommand>>, Error>
+) -> Result<TunnelStateMachineThreadState, Error>
 where
     P: AsRef<Path> + Send + 'static,
     T: From<TunnelStateTransition> + Send + 'static,
@@ -82,7 +92,11 @@ where
     let is_offline = offline_monitor.is_offline();
 
     let (startup_result_tx, startup_result_rx) = sync_mpsc::channel();
+    let (shutdown_tx, shutdown_rx) = sync_mpsc::channel();
+
     thread::spawn(move || {
+        let _shutdown_tx = shutdown_tx;
+
         match create_event_loop(
             allow_lan,
             block_when_disconnected,
@@ -115,12 +129,17 @@ where
             }
         }
         std::mem::drop(offline_monitor);
+        log::info!("Tunnel state machine thread exited");
     });
 
     startup_result_rx
         .recv()
         .expect("Failed to start tunnel state machine thread")?;
-    Ok(command_tx)
+
+    Ok(TunnelStateMachineThreadState {
+        command_tx,
+        shutdown_rx,
+    })
 }
 
 fn create_event_loop<T>(
