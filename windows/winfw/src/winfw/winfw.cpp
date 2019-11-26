@@ -164,14 +164,20 @@ bool
 WINFW_API
 WinFw_Deinitialize(bool addBootTimeFilters)
 {
-	bool status = false;
+	if (nullptr != g_fwContext)
+	{
+		delete g_fwContext;
+		g_fwContext = nullptr;
+	}
+
+	// If we're rebooting, enable persistent and boot-time filters
 
 	if (addBootTimeFilters)
 	{
 		try
 		{
 			const auto engine = wfp::FilterEngine::StandardSession(g_timeout);
-			status = wfp::Transaction::Execute(*engine, [&engine]()
+			return wfp::Transaction::Execute(*engine, [&engine]()
 			{
 				return PersistentBlock::Enable(*engine);
 			});
@@ -183,23 +189,10 @@ WinFw_Deinitialize(bool addBootTimeFilters)
 				g_errorSink(err.what(), g_errorContext);
 			}
 
-			status = false;
+			return false;
 		}
 	}
-	else
-	{
-		status = true;
-	}
-
-	if (nullptr == g_fwContext)
-	{
-		return status;
-	}
-
-	delete g_fwContext;
-	g_fwContext = nullptr;
-
-	return status;
+	return true;
 }
 
 WINFW_LINKAGE
