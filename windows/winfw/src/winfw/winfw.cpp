@@ -55,11 +55,7 @@ void InitializeWfpState()
 	if (!wfp::Transaction::Execute(*engine, [&engine]()
 	{
 		MullvadFilteringBase::Init(*engine);
-		if (!PersistentBlock::Disable(*engine))
-		{
-			return false;
-		}
-		return true;
+		return PersistentBlock::Disable(*engine);
 	}
 	))
 	{
@@ -343,11 +339,11 @@ WinFw_Purge()
 {
 	try
 	{
-		const auto session = wfp::FilterEngine::StandardSession();
+		auto session = wfp::FilterEngine::StandardSession();
 		MullvadFilteringBase::Purge(*session);
 		return true;
 	}
-	catch (std::exception &err)
+	catch (const std::exception &err)
 	{
 		if (nullptr != g_errorSink)
 		{

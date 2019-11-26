@@ -21,6 +21,7 @@ public:
 
 	MullvadGuids() = delete;
 
+	static const GUID &SublayerWhitelist();
 	static const GUID &SublayerBlacklist();
 
 	static const GUID &FilterBlockAll_Outbound_Ipv4();

@@ -225,7 +225,8 @@ bool FwContext::applyCommonBaseConfiguration(SessionController &controller, wfp:
 	//
 	ObjectPurger::GetRemoveAllFunctor()(engine);
 
-	return controller.addSublayer(*MullvadFilteringBase::SublayerBlacklist());
+	return controller.addSublayer(*MullvadFilteringBase::SublayerWhitelist())
+		&& controller.addSublayer(*MullvadFilteringBase::SublayerBlacklist());
 }
 
 bool FwContext::applyRuleset(const Ruleset &ruleset)

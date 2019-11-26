@@ -60,7 +60,6 @@ std::unique_ptr<wfp::SublayerBuilder> MullvadFilteringBase::SublayerWhitelist()
 		.description(L"Filters that permit traffic")
 		.key(SublayerWhitelistGuid())
 		.provider(ProviderGuid())
-		.persistent()
 		.weight(MAXUINT16);
 
 	return builder;
@@ -95,17 +94,6 @@ void MullvadFilteringBase::Init(wfp::FilterEngine& engine)
 		wfp::ObjectInstaller::AddProvider(engine, *providerBuilder);
 	}
 
-	const auto whitelistBuilder = SublayerWhitelist();
-
-	if (!wfp::ObjectExplorer::GetSublayer(
-		engine,
-		whitelistBuilder->id(),
-		[](const FWPM_SUBLAYER0&) { return true; }
-	))
-	{
-		wfp::ObjectInstaller::AddSublayer(engine, *whitelistBuilder);
-	}
-
 	// TODO: update existing objects (without deleting them, if possible)
 }
 
@@ -118,7 +106,8 @@ void MullvadFilteringBase::Purge(wfp::FilterEngine &engine)
 		engine,
 		[&engine](const FWPM_FILTER0 &filter)
 		{
-			if (0 == memcmp(filter.providerKey, &ProviderGuid(), sizeof(GUID)))
+			if (nullptr != filter.providerKey
+				&& 0 == memcmp(filter.providerKey, &ProviderGuid(), sizeof(GUID)))
 			{
 				wfp::ObjectDeleter::DeleteFilter(engine, filter.filterKey);
 			}
@@ -133,7 +122,8 @@ void MullvadFilteringBase::Purge(wfp::FilterEngine &engine)
 		engine,
 		[&engine](const FWPM_SUBLAYER0 &sublayer)
 		{
-			if (0 == memcmp(sublayer.providerKey, &ProviderGuid(), sizeof(GUID)))
+			if (nullptr != sublayer.providerKey
+				&& 0 == memcmp(sublayer.providerKey, &ProviderGuid(), sizeof(GUID)))
 			{
 				wfp::ObjectDeleter::DeleteSublayer(engine, sublayer.subLayerKey);
 			}
