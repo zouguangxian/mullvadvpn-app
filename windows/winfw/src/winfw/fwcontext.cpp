@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "fwcontext.h"
+#include "mullvadobjects.h"
 #include "objectpurger.h"
-#include "mullvadfilteringbase.h"
 #include "rules/blockall.h"
 #include "rules/ifirewallrule.h"
 #include "rules/permitdhcp.h"
@@ -15,11 +15,11 @@
 #include "rules/permitvpntunnelservice.h"
 #include "rules/permitping.h"
 #include "rules/restrictdns.h"
+#include "libwfp/transaction.h"
 #include "libwfp/filterengine.h"
-#include "libwfp/ipaddress.h"
-#include "libwfp/objectinstaller.h"
 #include <functional>
 #include <stdexcept>
+#include <utility>
 
 namespace
 {
@@ -64,9 +64,12 @@ void AppendNetBlockedRules(FwContext::Ruleset &ruleset)
 FwContext::FwContext(uint32_t timeout)
 	: m_baseline(0)
 {
-	m_engine = wfp::FilterEngine::StandardSession(timeout);
+	auto engine = wfp::FilterEngine::StandardSession(timeout);
 
-	m_sessionController = std::make_unique<SessionController>(m_engine);
+	//
+	// Pass engine ownership to "session controller"
+	//
+	m_sessionController = std::make_unique<SessionController>(std::move(engine));
 
 	if (false == applyBaseConfiguration())
 	{
@@ -79,9 +82,12 @@ FwContext::FwContext(uint32_t timeout)
 FwContext::FwContext(uint32_t timeout, const WinFwSettings &settings)
 	: m_baseline(0)
 {
-	m_engine = wfp::FilterEngine::StandardSession(timeout);
+	auto engine = wfp::FilterEngine::StandardSession(timeout);
 
-	m_sessionController = std::make_unique<SessionController>(m_engine);
+	//
+	// Pass engine ownership to "session controller"
+	//
+	m_sessionController = std::make_unique<SessionController>(std::move(engine));
 
 	uint32_t checkpoint = 0;
 
@@ -222,11 +228,16 @@ bool FwContext::applyCommonBaseConfiguration(SessionController &controller, wfp:
 {
 	//
 	// Since we're using a standard WFP session we can make no assumptions
+	// about which objects are already installed since before.
 	//
 	ObjectPurger::GetRemoveAllFunctor()(engine);
 
-	return controller.addSublayer(*MullvadFilteringBase::SublayerWhitelist())
-		&& controller.addSublayer(*MullvadFilteringBase::SublayerBlacklist());
+	//
+	// Install structural objects
+	//
+	return controller.addProvider(*MullvadObjects::Provider())
+		&& controller.addSublayer(*MullvadObjects::SublayerWhitelist())
+		&& controller.addSublayer(*MullvadObjects::SublayerBlacklist());
 }
 
 bool FwContext::applyRuleset(const Ruleset &ruleset)

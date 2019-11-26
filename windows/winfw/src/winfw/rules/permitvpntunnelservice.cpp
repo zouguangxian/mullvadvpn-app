@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "permitvpntunnelservice.h"
 #include "winfw/mullvadguids.h"
-#include "winfw/mullvadfilteringbase.h"
 #include "libwfp/filterbuilder.h"
 #include "libwfp/conditionbuilder.h"
 #include "libwfp/conditions/conditioninterface.h"
@@ -28,9 +27,9 @@ bool PermitVpnTunnelService::apply(IObjectInstaller &objectInstaller)
 		.key(MullvadGuids::FilterPermitVpnTunnelService_Ipv4())
 		.name(L"Permit inbound on tunnel interface (IPv4)")
 		.description(L"This filter is part of a rule that permits hosting services that listen on the tunnel interface")
-		.provider(MullvadFilteringBase::ProviderGuid())
+		.provider(MullvadGuids::Provider())
 		.layer(FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V4)
-		.sublayer(MullvadFilteringBase::SublayerWhitelistGuid())
+		.sublayer(MullvadGuids::SublayerWhitelist())
 		.weight(wfp::FilterBuilder::WeightClass::Max)
 		.permit();
 

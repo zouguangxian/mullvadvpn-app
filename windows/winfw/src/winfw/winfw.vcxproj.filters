@@ -45,8 +45,8 @@
     <ClCompile Include="rules\permitping.cpp">
       <Filter>rules</Filter>
     </ClCompile>
-    <ClCompile Include="mullvadfilteringbase.cpp" />
     <ClCompile Include="persistentblock.cpp" />
+    <ClCompile Include="mullvadobjects.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -99,8 +99,8 @@
     <ClInclude Include="rules\permitping.h">
       <Filter>rules</Filter>
     </ClInclude>
-    <ClInclude Include="mullvadfilteringbase.h" />
     <ClInclude Include="persistentblock.h" />
+    <ClInclude Include="mullvadobjects.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="rules">

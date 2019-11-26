@@ -3,7 +3,6 @@
 #include "winfw.h"
 #include "fwcontext.h"
 #include "objectpurger.h"
-#include "mullvadfilteringbase.h"
 #include "persistentblock.h"
 #include <windows.h>
 #include <stdexcept>
@@ -51,10 +50,9 @@ void InitializeWfpState()
 {
 	auto engine = wfp::FilterEngine::StandardSession(g_timeout);
 
-	// Reset boot-time and persistent objects, if they exist
+	// Purge boot-time and persistent objects, if they exist
 	if (!wfp::Transaction::Execute(*engine, [&engine]()
 	{
-		MullvadFilteringBase::Init(*engine);
 		return PersistentBlock::Disable(*engine);
 	}
 	))
@@ -332,8 +330,16 @@ WinFw_Purge()
 {
 	try
 	{
-		auto session = wfp::FilterEngine::StandardSession();
-		MullvadFilteringBase::Purge(*session);
+		auto engine = wfp::FilterEngine::StandardSession();
+
+		if (!wfp::Transaction::Execute(*engine, [&engine]()
+			{
+				return PersistentBlock::Disable(*engine);
+			}
+		))
+		{
+			throw std::runtime_error("Failed to remove boot-time configuration.");
+		}
 		return true;
 	}
 	catch (const std::exception &err)

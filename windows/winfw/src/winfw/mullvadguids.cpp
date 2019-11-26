@@ -24,6 +24,7 @@ DetailedWfpObjectRegistry MullvadGuids::BuildDetailedRegistry()
 {
 	std::multimap<WfpObjectType, GUID> registry;
 
+	registry.insert(std::make_pair(WfpObjectType::Provider, Provider()));
 	registry.insert(std::make_pair(WfpObjectType::Sublayer, SublayerWhitelist()));
 	registry.insert(std::make_pair(WfpObjectType::Sublayer, SublayerBlacklist()));
 	registry.insert(std::make_pair(WfpObjectType::Filter, FilterBlockAll_Outbound_Ipv4()));
@@ -76,6 +77,20 @@ const DetailedWfpObjectRegistry &MullvadGuids::DetailedRegistry()
 {
 	static auto registry = BuildDetailedRegistry();	// TODO: Thread safety.
 	return registry;
+}
+
+//static
+const GUID &MullvadGuids::Provider()
+{
+	static const GUID g =
+	{
+		0x21e1dab8,
+		0xb9db,
+		0x43c0,
+		{ 0xb3, 0x43, 0xeb, 0x93, 0x65, 0xc7, 0xbd, 0xd2 }
+	};
+
+	return g;
 }
 
 //static

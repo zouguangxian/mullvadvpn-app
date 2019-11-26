@@ -21,7 +21,7 @@
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="mullvadguids.cpp" />
-    <ClCompile Include="mullvadfilteringbase.cpp" />
+    <ClCompile Include="mullvadobjects.cpp" />
     <ClCompile Include="objectpurger.cpp" />
     <ClCompile Include="persistentblock.cpp" />
     <ClCompile Include="rules\blockall.cpp" />
@@ -51,7 +51,7 @@
     <ClInclude Include="guidhash.h" />
     <ClInclude Include="iobjectinstaller.h" />
     <ClInclude Include="mullvadguids.h" />
-    <ClInclude Include="mullvadfilteringbase.h" />
+    <ClInclude Include="mullvadobjects.h" />
     <ClInclude Include="objectpurger.h" />
     <ClInclude Include="persistentblock.h" />
     <ClInclude Include="rules\permitdhcpserver.h" />

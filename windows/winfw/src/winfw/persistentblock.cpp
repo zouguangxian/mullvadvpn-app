@@ -6,7 +6,6 @@
 #include "libwfp/objectexplorer.h"
 #include "libwfp/objectinstaller.h"
 #include "libwfp/objectdeleter.h"
-#include "mullvadfilteringbase.h"
 
 
 //static
@@ -72,24 +71,6 @@ const GUID& PersistentBlock::BootTimeFilterBlockAll_Inbound_Ipv4()
 
 bool PersistentBlock::Enable(wfp::FilterEngine& engine)
 {
-	// TODO: persistent provider
-
-	//
-	// Create persistent sublayers
-	//
-
-	const auto whitelistBuilder = MullvadFilteringBase::SublayerWhitelist();
-	whitelistBuilder->persistent();
-
-	if (!wfp::ObjectExplorer::GetSublayer(
-		engine,
-		whitelistBuilder->id(),
-		[](const FWPM_SUBLAYER0&) { return true; }
-	))
-	{
-		wfp::ObjectInstaller::AddSublayer(engine, *whitelistBuilder);
-	}
-
 	//
 	// Create persistent BFE filters
 	//
@@ -102,9 +83,7 @@ bool PersistentBlock::Enable(wfp::FilterEngine& engine)
 		.key(PersistentFilterBlockAll_Outbound_Ipv4())
 		.name(L"Block all outbound connections (IPv4)")
 		.description(L"This filter is part of a rule that restricts inbound and outbound traffic")
-		.provider(MullvadFilteringBase::ProviderGuid())
 		.layer(FWPM_LAYER_ALE_AUTH_CONNECT_V4)
-		.sublayer(MullvadFilteringBase::SublayerWhitelistGuid())
 		.weight(wfp::FilterBuilder::WeightClass::Min)
 		.persistent()
 		.block(); 
@@ -134,26 +113,28 @@ bool PersistentBlock::Enable(wfp::FilterEngine& engine)
 
 	// Block IPv4 traffic
 
-	filterBuilder
+	wfp::FilterBuilder bootFilterBuilder;
+
+	bootFilterBuilder
 		.key(BootTimeFilterBlockAll_Outbound_Ipv4())
 		.name(L"Block all outbound connections (IPv4)")
+		.description(L"This filter is part of a rule that restricts inbound and outbound traffic")
 		.layer(FWPM_LAYER_ALE_AUTH_CONNECT_V4)
-		.sublayer(MullvadFilteringBase::SublayerWhitelistGuid())
 		.weight(wfp::FilterBuilder::WeightClass::Min)
-		.notPersistent()
-		.boottime();
+		.boottime()
+		.block();
 
-	if (!wfp::ObjectInstaller::AddFilter(engine, filterBuilder, nullConditionBuilder))
+	if (!wfp::ObjectInstaller::AddFilter(engine, bootFilterBuilder, nullConditionBuilder))
 	{
 		return false;
 	}
 
-	filterBuilder
+	bootFilterBuilder
 		.key(BootTimeFilterBlockAll_Inbound_Ipv4())
 		.name(L"Block all inbound connections (IPv4)")
 		.layer(FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V4);
 
-	if (!wfp::ObjectInstaller::AddFilter(engine, filterBuilder, nullConditionBuilder))
+	if (!wfp::ObjectInstaller::AddFilter(engine, bootFilterBuilder, nullConditionBuilder))
 	{
 		return false;
 	}
@@ -173,10 +154,6 @@ bool PersistentBlock::Disable(wfp::FilterEngine& engine)
 	wfp::ObjectDeleter::DeleteFilter(engine, PersistentFilterBlockAll_Outbound_Ipv4());
 	wfp::ObjectDeleter::DeleteFilter(engine, BootTimeFilterBlockAll_Inbound_Ipv4());
 	wfp::ObjectDeleter::DeleteFilter(engine, BootTimeFilterBlockAll_Outbound_Ipv4());
-
-	wfp::ObjectDeleter::DeleteSublayer(engine, MullvadFilteringBase::SublayerWhitelistGuid());
-
-	// TODO: remove IPv6 filters
 
 	return true;
 }

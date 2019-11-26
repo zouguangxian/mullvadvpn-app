@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "restrictdns.h"
 #include "winfw/mullvadguids.h"
-#include "winfw/mullvadfilteringbase.h"
 #include "libwfp/filterbuilder.h"
 #include "libwfp/conditionbuilder.h"
 #include "libwfp/conditions/conditioninterface.h"
@@ -38,7 +37,7 @@ bool RestrictDns::apply(IObjectInstaller &objectInstaller)
 		.key(MullvadGuids::FilterRestrictDns_Outbound_Ipv4())
 		.name(L"Block DNS requests outside the VPN tunnel (IPv4)")
 		.description(L"This filter is part of a rule that restricts DNS traffic")
-		.provider(MullvadFilteringBase::ProviderGuid())
+		.provider(MullvadGuids::Provider())
 		.layer(FWPM_LAYER_ALE_AUTH_CONNECT_V4)
 		.sublayer(MullvadGuids::SublayerBlacklist())
 		.weight(wfp::FilterBuilder::WeightClass::Max)

@@ -21,6 +21,7 @@ public:
 
 	MullvadGuids() = delete;
 
+	static const GUID &Provider();
 	static const GUID &SublayerWhitelist();
 	static const GUID &SublayerBlacklist();
 

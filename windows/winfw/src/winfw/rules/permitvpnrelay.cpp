@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "permitvpnrelay.h"
 #include "winfw/mullvadguids.h"
-#include "winfw/mullvadfilteringbase.h"
 #include "libwfp/filterbuilder.h"
 #include "libwfp/conditionbuilder.h"
 #include "libwfp/conditions/conditionprotocol.h"
@@ -64,9 +63,9 @@ bool PermitVpnRelay::apply(IObjectInstaller &objectInstaller)
 		.key(MullvadGuids::FilterPermitVpnRelay())
 		.name(L"Permit outbound connections to VPN relay")
 		.description(L"This filter is part of a rule that permits communication with a VPN relay")
-		.provider(MullvadFilteringBase::ProviderGuid())
+		.provider(MullvadGuids::Provider())
 		.layer(LayerFromIp(m_relay))
-		.sublayer(MullvadFilteringBase::SublayerWhitelistGuid())
+		.sublayer(MullvadGuids::SublayerWhitelist())
 		.weight(wfp::FilterBuilder::WeightClass::Max)
 		.permit();
 

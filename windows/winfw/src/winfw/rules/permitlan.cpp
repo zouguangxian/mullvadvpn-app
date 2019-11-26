@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "permitlan.h"
 #include "winfw/mullvadguids.h"
-#include "winfw/mullvadfilteringbase.h"
 #include "libwfp/filterbuilder.h"
 #include "libwfp/conditionbuilder.h"
 #include "libwfp/ipaddress.h"
@@ -30,9 +29,9 @@ bool PermitLan::applyIpv4(IObjectInstaller &objectInstaller) const
 		.key(MullvadGuids::FilterPermitLan_Outbound_Ipv4())
 		.name(L"Permit outbound LAN traffic (IPv4)")
 		.description(L"This filter is part of a rule that permits LAN traffic")
-		.provider(MullvadFilteringBase::ProviderGuid())
+		.provider(MullvadGuids::Provider())
 		.layer(FWPM_LAYER_ALE_AUTH_CONNECT_V4)
-		.sublayer(MullvadFilteringBase::SublayerWhitelistGuid())
+		.sublayer(MullvadGuids::SublayerWhitelist())
 		.weight(wfp::FilterBuilder::WeightClass::Max)
 		.permit();
 
@@ -82,9 +81,9 @@ bool PermitLan::applyIpv6(IObjectInstaller &objectInstaller) const
 		.key(MullvadGuids::FilterPermitLan_Outbound_Ipv6())
 		.name(L"Permit outbound LAN traffic (IPv6)")
 		.description(L"This filter is part of a rule that permits LAN traffic")
-		.provider(MullvadFilteringBase::ProviderGuid())
+		.provider(MullvadGuids::Provider())
 		.layer(FWPM_LAYER_ALE_AUTH_CONNECT_V6)
-		.sublayer(MullvadFilteringBase::SublayerWhitelistGuid())
+		.sublayer(MullvadGuids::SublayerWhitelist())
 		.weight(wfp::FilterBuilder::WeightClass::Max)
 		.permit();
 

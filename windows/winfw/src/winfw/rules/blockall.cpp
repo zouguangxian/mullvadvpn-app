@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "blockall.h"
 #include "winfw/mullvadguids.h"
-#include "winfw/mullvadfilteringbase.h"
 #include "libwfp/filterbuilder.h"
 #include "libwfp/nullconditionbuilder.h"
 
@@ -20,9 +19,9 @@ bool BlockAll::apply(IObjectInstaller &objectInstaller)
 		.key(MullvadGuids::FilterBlockAll_Outbound_Ipv4())
 		.name(L"Block all outbound connections (IPv4)")
 		.description(L"This filter is part of a rule that restricts inbound and outbound traffic")
-		.provider(MullvadFilteringBase::ProviderGuid())
+		.provider(MullvadGuids::Provider())
 		.layer(FWPM_LAYER_ALE_AUTH_CONNECT_V4)
-		.sublayer(MullvadFilteringBase::SublayerWhitelistGuid())
+		.sublayer(MullvadGuids::SublayerWhitelist())
 		.weight(wfp::FilterBuilder::WeightClass::Min)
 		.block();
 
