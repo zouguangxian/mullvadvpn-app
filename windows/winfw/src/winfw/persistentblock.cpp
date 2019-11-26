@@ -146,8 +146,6 @@ bool PersistentBlock::Enable(wfp::FilterEngine& engine)
 	return true;
 }
 
-#include <iostream>
-
 bool PersistentBlock::Disable(wfp::FilterEngine& engine)
 {
 	wfp::ObjectDeleter::DeleteFilter(engine, PersistentFilterBlockAll_Inbound_Ipv4());
