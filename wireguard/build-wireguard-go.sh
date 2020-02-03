@@ -52,7 +52,7 @@ function build_windows {
 
         target_dir=../../build/lib/x86_64-pc-windows-msvc/
         mkdir -p $target_dir
-        cp libwg.dll libwg.lib $target_dir
+        mv libwg.dll libwg.lib $target_dir
     popd
 }
 
