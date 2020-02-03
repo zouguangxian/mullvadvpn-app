@@ -72,10 +72,9 @@ function unix_target_triple {
 function build_unix {
     echo "Building wireguard-go for $1"
     pushd wireguard-go
-        go build -v -o libwg.a -buildmode c-archive
         target_triple_dir="../../build/lib/$(unix_target_triple)"
         mkdir -p $target_triple_dir
-        cp libwg.a $target_triple_dir
+        go build -v -o $target_triple_dir/libwg.a -buildmode c-archive
     popd
 }
 
