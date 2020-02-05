@@ -38,7 +38,7 @@ for arch in arm arm64 x86_64 x86; do
             ;;
     esac
 
-    install-ndk-toolchain $arch
+    eval "$(install-ndk-toolchain $arch)"
 
     export ANDROID_ARCH_NAME="$arch"
     export ANDROID_TOOLCHAIN_ROOT="/opt/android/toolchains/android21-${arch}"
