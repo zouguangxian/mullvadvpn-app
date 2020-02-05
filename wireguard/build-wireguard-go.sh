@@ -80,13 +80,11 @@ function build_unix {
 
 function build_android {
     echo "Building for android"
-    # local docker_image_hash="d73fdea1108cd75d7eb09f8894fe6892dc502a2d62c39b4f75072e777398f477"
 
     docker run --rm \
         -v "$(pwd)/../":/workspace \
         --entrypoint "/workspace/wireguard/wireguard-go/build-android.sh" \
-        mullvadvpn/mullvad-android-app-build
-        # mullvadvpn/mullvad-android-app-build@sha256:$docker_image_hash
+        mullvadvpn/mullvad-android-app-build:test
 }
 
 function build_wireguard_go {
