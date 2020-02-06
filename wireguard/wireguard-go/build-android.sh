@@ -39,12 +39,7 @@ for arch in arm arm64 x86_64 x86; do
     esac
 
     eval "$(install-ndk-toolchain $arch)"
-
-    export ANDROID_ARCH_NAME="$arch"
-    export ANDROID_TOOLCHAIN_ROOT="/opt/android/toolchains/android21-${arch}"
-    export ANDROID_SYSROOT="${ANDROID_TOOLCHAIN_ROOT}/sysroot"
-    export ANDROID_C_COMPILER="${ANDROID_TOOLCHAIN_ROOT}/bin/${ANDROID_LLVM_TRIPLE}21-clang"
-
+    export ANDROID_ARCH_NAME=$arch
     export PATH="$PATH:${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin"
 
     # Build Wireguard-Go
