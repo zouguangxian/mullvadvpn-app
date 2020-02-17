@@ -8,15 +8,17 @@
 
 import Combine
 import UIKit
+import MapKit
 import NetworkExtension
 import os
 
-class ConnectViewController: UIViewController, RootContainment, TunnelControlViewControllerDelegate {
+class ConnectViewController: UIViewController, RootContainment, TunnelControlViewControllerDelegate, MKMapViewDelegate {
 
     @IBOutlet var secureLabel: UILabel!
     @IBOutlet var countryLabel: UILabel!
     @IBOutlet var cityLabel: UILabel!
     @IBOutlet var connectionPanel: ConnectionPanelView!
+    @IBOutlet var mapView: MKMapView!
 
     private var setRelaysSubscriber: AnyCancellable?
     private var startStopTunnelSubscriber: AnyCancellable?
@@ -53,6 +55,8 @@ class ConnectViewController: UIViewController, RootContainment, TunnelControlVie
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        loadMapData()
+
         connectionPanel.collapseButton.addTarget(self, action: #selector(handleConnectionPanelButton(_:)), for: .touchUpInside)
 
         tunnelStateSubscriber = TunnelManager.shared.$tunnelState
@@ -71,6 +75,45 @@ class ConnectViewController: UIViewController, RootContainment, TunnelControlVie
             let tunnelControlController = segue.destination as! TunnelControlViewController
             tunnelControlController.view.translatesAutoresizingMaskIntoConstraints = false
             tunnelControlController.delegate = self
+        }
+    }
+
+    // MARK: - MKMapViewDelegate
+
+    func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+        if let polygon = overlay as? MKPolygon {
+            let renderer = MKPolygonRenderer(polygon: polygon)
+            renderer.fillColor = UIColor.secondaryColor
+            renderer.strokeColor = UIColor.black
+            renderer.lineWidth = 2.0
+            return renderer
+        }
+
+        if let multiPolygon = overlay as? MKMultiPolygon {
+            let renderer = MKMultiPolygonRenderer(multiPolygon: multiPolygon)
+            renderer.fillColor = UIColor.secondaryColor
+            renderer.strokeColor = UIColor.black
+            renderer.lineWidth = 2.0
+            return renderer
+        }
+
+        return MKOverlayRenderer(overlay: overlay)
+    }
+
+    private func loadMapData() {
+        let decoder = MKGeoJSONDecoder()
+
+        let geoJSONURL = Bundle.main.url(forResource: "countries.geo", withExtension: "json")!
+
+        let data = try! Data(contentsOf: geoJSONURL)
+        let geoJSONObjects = try! decoder.decode(data)
+
+        for object in geoJSONObjects {
+            if let feat = object as? MKGeoJSONFeature {
+                for case let overlay as MKOverlay in feat.geometry {
+                    mapView.addOverlay(overlay, level: .aboveLabels)
+                }
+            }
         }
     }
 

@@ -278,6 +278,12 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
+                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" zoomEnabled="NO" scrollEnabled="NO" rotateEnabled="NO" pitchEnabled="NO" showsBuildings="NO" showsCompass="NO" showsPointsOfInterest="NO" translatesAutoresizingMaskIntoConstraints="NO" id="yTI-W1-tG1">
+                                <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                                <connections>
+                                    <outlet property="delegate" destination="Ki6-Mt-b6R" id="LeQ-qJ-SxC"/>
+                                </connections>
+                            </mapView>
                             <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="3rI-k6-N1S">
                                 <rect key="frame" x="24" y="245" width="327" height="212"/>
                                 <subviews>
@@ -341,8 +347,12 @@
                             <constraint firstItem="3rI-k6-N1S" firstAttribute="leading" secondItem="PNd-mm-N1B" secondAttribute="leadingMargin" id="5fs-z1-QKf"/>
                             <constraint firstAttribute="trailingMargin" secondItem="3rI-k6-N1S" secondAttribute="trailing" id="NFr-rI-7r3"/>
                             <constraint firstItem="iBo-pG-OTz" firstAttribute="trailing" secondItem="Dv1-XA-XQG" secondAttribute="trailing" constant="24" id="OPf-p4-dPn"/>
+                            <constraint firstAttribute="bottom" secondItem="yTI-W1-tG1" secondAttribute="bottom" id="PGD-3g-MPD"/>
+                            <constraint firstItem="yTI-W1-tG1" firstAttribute="top" secondItem="PNd-mm-N1B" secondAttribute="top" id="WsA-Kb-SKG"/>
+                            <constraint firstAttribute="trailing" secondItem="yTI-W1-tG1" secondAttribute="trailing" id="ZWL-iP-iPD"/>
                             <constraint firstItem="Dv1-XA-XQG" firstAttribute="top" secondItem="3rI-k6-N1S" secondAttribute="bottom" constant="24" id="hRj-EJ-ls3"/>
                             <constraint firstItem="iBo-pG-OTz" firstAttribute="bottom" secondItem="Dv1-XA-XQG" secondAttribute="bottom" constant="24" id="sjJ-M6-O74"/>
+                            <constraint firstItem="yTI-W1-tG1" firstAttribute="leading" secondItem="PNd-mm-N1B" secondAttribute="leading" id="uTw-Sq-eli"/>
                             <constraint firstItem="Dv1-XA-XQG" firstAttribute="leading" secondItem="iBo-pG-OTz" secondAttribute="leading" constant="24" id="ye6-tj-a0l"/>
                         </constraints>
                         <edgeInsets key="layoutMargins" top="0.0" left="24" bottom="24" right="24"/>
@@ -352,6 +362,7 @@
                         <outlet property="cityLabel" destination="mfr-Ic-PYf" id="vut-Me-cdj"/>
                         <outlet property="connectionPanel" destination="ocV-9f-WDZ" id="Uad-bl-KFU"/>
                         <outlet property="countryLabel" destination="9Yf-sl-l3q" id="L3N-Jn-zlr"/>
+                        <outlet property="mapView" destination="yTI-W1-tG1" id="iEr-7H-F8i"/>
                         <outlet property="secureLabel" destination="HNy-mU-nui" id="QBg-mR-Z6g"/>
                         <segue destination="hOC-Ab-N3D" kind="presentation" identifier="ShowRelaySelector" id="mui-V1-CK4"/>
                     </connections>
@@ -372,20 +383,20 @@
                         <color key="separatorColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <prototypes>
                             <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" accessoryType="disclosureIndicator" indentationWidth="10" reuseIdentifier="Account" id="ghE-jC-RWf" customClass="SettingsAccountCell" customModule="MullvadVPN" customModuleProvider="target">
-                                <rect key="frame" x="0.0" y="55.5" width="375" height="43"/>
+                                <rect key="frame" x="0.0" y="55.5" width="375" height="43.5"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="ghE-jC-RWf" id="sTl-gI-g2a">
-                                    <rect key="frame" x="0.0" y="0.0" width="348" height="43"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="348" height="43.5"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
                                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Account" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Lve-Kd-qTr">
-                                            <rect key="frame" x="16" y="11" width="63.5" height="21"/>
+                                            <rect key="frame" x="16" y="11" width="63.5" height="21.5"/>
                                             <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                             <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                             <nil key="highlightedColor"/>
                                         </label>
                                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="252" verticalHuggingPriority="251" text="A YEAR LEFT" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="QeD-EQ-Ruo">
-                                            <rect key="frame" x="259" y="11" width="81" height="21"/>
+                                            <rect key="frame" x="259" y="11" width="81" height="21.5"/>
                                             <fontDescription key="fontDescription" type="system" weight="medium" pointSize="13"/>
                                             <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                             <nil key="highlightedColor"/>
@@ -410,20 +421,20 @@
                                 </connections>
                             </tableViewCell>
                             <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="AppVersion" id="pbd-iC-Emm" customClass="SettingsAppVersionCell" customModule="MullvadVPN" customModuleProvider="target">
-                                <rect key="frame" x="0.0" y="98.5" width="375" height="43"/>
+                                <rect key="frame" x="0.0" y="99" width="375" height="43.5"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="pbd-iC-Emm" id="lYp-Z8-1sN">
-                                    <rect key="frame" x="0.0" y="0.0" width="375" height="43"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="375" height="43.5"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
                                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="App version" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="pYC-Zb-8N9">
-                                            <rect key="frame" x="16" y="11" width="91" height="21"/>
+                                            <rect key="frame" x="16" y="11" width="91" height="21.5"/>
                                             <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                             <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                             <nil key="highlightedColor"/>
                                         </label>
                                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="252" verticalHuggingPriority="251" text="2018.3" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="sOr-vj-cg7">
-                                            <rect key="frame" x="316.5" y="11" width="42.5" height="21"/>
+                                            <rect key="frame" x="316.5" y="11" width="42.5" height="21.5"/>
                                             <fontDescription key="fontDescription" type="system" weight="medium" pointSize="13"/>
                                             <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                             <nil key="highlightedColor"/>
@@ -445,14 +456,14 @@
                                 </connections>
                             </tableViewCell>
                             <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" accessoryType="disclosureIndicator" indentationWidth="10" reuseIdentifier="BasicDisclosure" id="Ahs-gu-nTM" customClass="SettingsBasicCell" customModule="MullvadVPN" customModuleProvider="target">
-                                <rect key="frame" x="0.0" y="141.5" width="375" height="43"/>
+                                <rect key="frame" x="0.0" y="142.5" width="375" height="43.5"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="Ahs-gu-nTM" id="Drq-vk-8F2">
-                                    <rect key="frame" x="0.0" y="0.0" width="348" height="43"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="348" height="43.5"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
                                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Amw-A3-ePS">
-                                            <rect key="frame" x="16" y="11" width="324" height="21"/>
+                                            <rect key="frame" x="16" y="11" width="324" height="21.5"/>
                                             <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                             <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                             <nil key="highlightedColor"/>
