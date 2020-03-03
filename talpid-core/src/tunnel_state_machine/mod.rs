@@ -168,9 +168,7 @@ fn create_event_loop(
                 .map_err(|_| Error::SendStateChange)
         })
         .then(move |_| {
-            if shutdown_tx.send(()).is_err() {
-                log::error!("Can't send shutdown completion to daemon");
-            }
+            log::info!("TUNNEL STATE MACHINE SHUT DOWN");
             Ok(())
         });
 

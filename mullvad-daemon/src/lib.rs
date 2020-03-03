@@ -589,17 +589,6 @@ where
         for cb in shutdown_callbacks {
             cb();
         }
-        // if let Err(e) = tsm_shutdown_rx.wait() {
-        //     log::error!("Failed to receive shutdown signal from tunnel state machine - {}", e);
-        // }
-        match tsm_shutdown_rx.wait() {
-            Ok(_) => {
-                log::info!("Tunnel state machine shut down");
-            },
-            Err(e) => {
-                log::error!("Failed to receive shutdown signal from tunnel state machine - {}", e);
-            }
-        }
         mem::drop(event_listener);
     }
 
