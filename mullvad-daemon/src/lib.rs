@@ -432,6 +432,8 @@ pub struct Daemon<L: EventListener> {
     last_generated_bridge_relay: Option<Relay>,
     app_version_info: AppVersionInfo,
     shutdown_callbacks: Vec<Box<dyn FnOnce()>>,
+    /// oneshot channel that completes once the tunnel state machine has been shut down
+    tsm_shutdown_rx: oneshot::Receiver<()>,
 }
 
 impl<L> Daemon<L>
@@ -447,6 +449,7 @@ where
         #[cfg(target_os = "android")] android_context: AndroidContext,
     ) -> Result<Self, Error> {
         let ca_path = resource_dir.join(mullvad_paths::resources::API_CA_FILENAME);
+        let (tsm_shutdown_tx, tsm_shutdown_rx) = oneshot::channel();
 
         let mut rpc_manager = mullvad_rpc::MullvadRpcFactory::with_cache_dir(&cache_dir, &ca_path);
 
@@ -505,6 +508,7 @@ where
             resource_dir,
             cache_dir,
             internal_event_tx.to_specialized_sender(),
+            tsm_shutdown_tx,
             #[cfg(target_os = "android")]
             android_context,
         )
@@ -540,6 +544,7 @@ where
             last_generated_bridge_relay: None,
             app_version_info,
             shutdown_callbacks: vec![],
+            tsm_shutdown_rx,
         };
 
         daemon.ensure_wireguard_keys_for_current_account();
@@ -580,22 +585,34 @@ where
     }
 
     fn finalize(self) {
-        let (event_listener, shutdown_callbacks) = self.shutdown();
+        let (event_listener, shutdown_callbacks, tsm_shutdown_rx) = self.shutdown();
         for cb in shutdown_callbacks {
             cb();
+        }
+        // if let Err(e) = tsm_shutdown_rx.wait() {
+        //     log::error!("Failed to receive shutdown signal from tunnel state machine - {}", e);
+        // }
+        match tsm_shutdown_rx.wait() {
+            Ok(_) => {
+                log::info!("Tunnel state machine shut down");
+            },
+            Err(e) => {
+                log::error!("Failed to receive shutdown signal from tunnel state machine - {}", e);
+            }
         }
         mem::drop(event_listener);
     }
 
     /// Shuts down the daemon without shutting down the underlying event listener and the shutdown
     /// callbacks
-    fn shutdown(self) -> (L, Vec<Box<dyn FnOnce()>>) {
+    fn shutdown(self) -> (L, Vec<Box<dyn FnOnce()>>, oneshot::Receiver<()>) {
         let Daemon {
             event_listener,
             shutdown_callbacks,
+            tsm_shutdown_rx,
             ..
         } = self;
-        (event_listener, shutdown_callbacks)
+        (event_listener, shutdown_callbacks, tsm_shutdown_rx)
     }
 
 
