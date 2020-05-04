@@ -71,6 +71,7 @@ class MullvadVpnService : TalpidVpnService() {
         }
 
     override fun onCreate() {
+        android.util.Log.d("mullvad", "MullvadVpnService.onCreate")
         super.onCreate()
 
         notificationManager = ForegroundNotificationManager(this, serviceNotifier)
@@ -80,12 +81,15 @@ class MullvadVpnService : TalpidVpnService() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        android.util.Log.d("mullvad", "MullvadVpnService.onStartCommand")
         val startResult = super.onStartCommand(intent, flags, startId)
         val action = intent?.action
 
         if (action == VpnService.SERVICE_INTERFACE || action == KEY_CONNECT_ACTION) {
+            android.util.Log.d("mullvad", "Queuing connect")
             pendingAction = PendingAction.Connect
         } else if (action == KEY_DISCONNECT_ACTION) {
+            android.util.Log.d("mullvad", "Queuing disconnect")
             pendingAction = PendingAction.Disconnect
         }
 
@@ -93,13 +97,17 @@ class MullvadVpnService : TalpidVpnService() {
     }
 
     override fun onBind(intent: Intent): IBinder {
+        android.util.Log.d("mullvad", "MullvadVpnService.onBind")
         bindCount += 1
+        android.util.Log.d("mullvad", "  bind count = $bindCount")
 
         return super.onBind(intent) ?: binder
     }
 
     override fun onRebind(intent: Intent) {
+        android.util.Log.d("mullvad", "MullvadVpnService.onRebind")
         bindCount += 1
+        android.util.Log.d("mullvad", "  bind count = $bindCount")
 
         if (isStopping) {
             restart()
@@ -108,16 +116,20 @@ class MullvadVpnService : TalpidVpnService() {
     }
 
     override fun onRevoke() {
+        android.util.Log.d("mullvad", "MullvadVpnService.onRevoke")
         pendingAction = PendingAction.Disconnect
     }
 
     override fun onUnbind(intent: Intent): Boolean {
+        android.util.Log.d("mullvad", "MullvadVpnService.onUnbind")
         bindCount -= 1
+        android.util.Log.d("mullvad", "  bind count = $bindCount")
 
         return true
     }
 
     override fun onDestroy() {
+        android.util.Log.d("mullvad", "MullvadVpnService.onDestroy")
         tearDown()
         notificationManager.onDestroy()
         super.onDestroy()
@@ -133,15 +145,18 @@ class MullvadVpnService : TalpidVpnService() {
     }
 
     private fun setUp() {
+        android.util.Log.d("mullvad", "MullvadVpnService.setUp")
         startDaemonJob?.cancel()
         startDaemonJob = startDaemon()
     }
 
     private fun startDaemon() = GlobalScope.launch(Dispatchers.Default) {
+        android.util.Log.d("mullvad", "MullvadVpnService.startDaemon")
         prepareFiles()
 
         val daemon = MullvadDaemon(this@MullvadVpnService).apply {
             onDaemonStopped = {
+                android.util.Log.d("mullvad", "onDaemonStopped")
                 instance = null
 
                 if (!isStopping) {
@@ -178,6 +193,7 @@ class MullvadVpnService : TalpidVpnService() {
     }
 
     private fun setUpInstance(daemon: MullvadDaemon, settings: Settings) {
+        android.util.Log.d("mullvad", "MullvadVpnService.setUpInstance")
         val settingsListener = SettingsListener(daemon, settings).apply {
             accountNumberNotifier.subscribe { accountNumber ->
                 loggedIn = accountNumber != null
@@ -215,21 +231,25 @@ class MullvadVpnService : TalpidVpnService() {
     }
 
     private fun stop() {
+        android.util.Log.d("mullvad", "MullvadVpnService.stop")
         isStopping = true
         stopDaemon()
         stopSelf()
     }
 
     private fun stopDaemon() {
+        android.util.Log.d("mullvad", "MullvadVpnService.stopDaemon")
         startDaemonJob?.cancel()
         instance?.daemon?.shutdown()
     }
 
     private fun tearDown() {
+        android.util.Log.d("mullvad", "MullvadVpnService.tearDown")
         stopDaemon()
     }
 
     private fun restart() {
+        android.util.Log.d("mullvad", "MullvadVpnService.restart")
         tearDown()
         setUp()
     }
