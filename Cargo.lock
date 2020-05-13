@@ -165,6 +165,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "block"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "bstr"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1638,6 +1643,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "network-framework-sys"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "core-foundation-sys 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libc 0.2.69 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "nftnl"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2710,6 +2724,7 @@ version = "0.1.0"
 dependencies = [
  "async-stream 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "atty 0.2.13 (registry+https://github.com/rust-lang/crates.io-index)",
+ "block 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "cfg-if 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "chrono 0.4.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "dbus 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2730,6 +2745,7 @@ dependencies = [
  "netlink-packet-route 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "netlink-proto 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "netlink-sys 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "network-framework-sys 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "nftnl 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "nix 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "notify 4.0.13 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -3580,6 +3596,7 @@ dependencies = [
 "checksum bitflags 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "4f67931368edf3a9a51d29886d245f1c3db2f1ef0dcc9e35ff70341b78c10d23"
 "checksum bitflags 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
 "checksum blake2b_simd 0.5.8 (registry+https://github.com/rust-lang/crates.io-index)" = "5850aeee1552f495dd0250014cf64b82b7c8879a89d83b33bbdace2cc4f63182"
+"checksum block 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "0d8c1fef690941d3e7788d328517591fecc684c084084702d6ff1641e993699a"
 "checksum bstr 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)" = "8d6c2c5b58ab920a4f5aeaaca34b4488074e8cc7596af94e6f8c6ff247c60245"
 "checksum bumpalo 3.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "12ae9db68ad7fac5fe51304d20f016c911539251075a214f8e663babefa35187"
 "checksum byteorder 1.3.2 (registry+https://github.com/rust-lang/crates.io-index)" = "a7c3dd8985a7111efc5c80b44e23ecdd8c007de8ade3b96595387e812b957cf5"
@@ -3715,6 +3732,7 @@ dependencies = [
 "checksum netlink-packet-utils 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ca26de3f3fe7cc09a925255291049c65699a95db6f124fa8019dc0bb396fdaff"
 "checksum netlink-proto 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "844a78a78bee85b99686973856e57ce339ef2490660305d26e35bb74a672ad15"
 "checksum netlink-sys 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "aee128bb9bcc04f426d9b5e0bf3077726776b5b41770a3b2e4db5f52295625bf"
+"checksum network-framework-sys 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "12a0b02d3ddff8bdf9e3a6f151b20f2b022c394b02a9fccb506ebcbc74db2185"
 "checksum nftnl 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "f3727d1e8c1c9af88857f46539c3030693158a2a7586056b8cab6ded523bf7aa"
 "checksum nftnl-sys 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "dba134c9b125b7d7c13d813388aaeb2aeeba60fb1eb702799163fb845086ca33"
 "checksum nix 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)" = "6c722bee1037d430d0f8e687bbdbf222f27cc6e4e68d5caf630857bb2b6dbdce"

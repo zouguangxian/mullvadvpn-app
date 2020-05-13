@@ -68,6 +68,8 @@ tun = "0.4.3"
 pfctl = "0.3"
 system-configuration = "0.3"
 tun = "0.4.3"
+network-framework-sys = "0.1"
+block = "0.1"
 
 
 [target.'cfg(windows)'.dependencies]
