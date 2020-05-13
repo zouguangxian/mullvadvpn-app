@@ -34,10 +34,6 @@ pub enum Error {
     #[error(display = "Error while running \"route -nv monitor\"")]
     FailedToMonitorRoutes(#[error(source)] io::Error),
 
-    /// No default route in "route -n get default" output.
-    #[error(display = "No default route in \"route -n get default\" output")]
-    NoDefaultRoute,
-
     /// Unexpected output from netstat
     #[error(display = "Unexpected output from netstat")]
     BadOutputFromNetstat,
@@ -84,10 +80,6 @@ impl RouteManagerImpl {
 
         let v4_gateway = Self::get_default_node_cmd("-inet").wait()?;
         let v6_gateway = Self::get_default_node_cmd("-inet6").wait()?;
-
-        if v4_gateway.is_none() && v6_gateway.is_none() {
-            return Err(Error::NoDefaultRoute);
-        }
 
         for route in required_routes {
             match route.node {
