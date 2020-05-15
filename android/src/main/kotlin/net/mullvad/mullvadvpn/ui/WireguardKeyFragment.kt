@@ -45,6 +45,25 @@ class WireguardKeyFragment : ServiceDependentFragment(OnNoService.GoToLaunchScre
     private var actionState: ActionState = ActionState.Idle(false)
         set(value) {
             if (field != value) {
+                when (value) {
+                    is ActionState.Idle -> {
+                        if (value.verified) {
+                            android.util.Log.d("mullvad", "WireguardKey actionState = Idle(verified)")
+                        } else {
+                            android.util.Log.d("mullvad", "WireguardKey actionState = Idle(not verified)")
+                        }
+                    }
+                    is ActionState.Generating -> {
+                        if (value.replacing) {
+                            android.util.Log.d("mullvad", "WireguardKey actionState = Generating(replacing)")
+                        } else {
+                            android.util.Log.d("mullvad", "WireguardKey actionState = Generating(not replacing)")
+                        }
+                    }
+                    is ActionState.Verifying -> {
+                        android.util.Log.d("mullvad", "WireguardKey actionState = Verifying")
+                    }
+                }
                 field = value
                 updateKeySpinners()
                 updateStatusMessage()
@@ -58,6 +77,27 @@ class WireguardKeyFragment : ServiceDependentFragment(OnNoService.GoToLaunchScre
     private var keyStatus: KeygenEvent? = null
         set(value) {
             if (field != value) {
+                when (value) {
+                    null -> android.util.Log.d("mullvad", "WireguardKey keyStatus = null")
+                    is KeygenEvent.NewKey -> {
+                        val verified = when (value.verified) {
+                            null -> "null"
+                            true -> "verified"
+                            false -> "not verified"
+                        }
+
+                        val publicKey = value.publicKey
+                        val failure = value.replacementFailure
+
+                        android.util.Log.d("mullvad", "WireguardKey keyStatus = NewKey($publicKey, $verified, $failure)")
+                    }
+                    is KeygenEvent.TooManyKeys -> {
+                        android.util.Log.d("mullvad", "WireguardKey keyStatus = TooManyKeys")
+                    }
+                    is KeygenEvent.GenerationFailure -> {
+                        android.util.Log.d("mullvad", "WireguardKey keyStatus = GenerationFailure")
+                    }
+                }
                 field = value
                 updateKeyInformation()
                 updateStatusMessage()
@@ -69,6 +109,7 @@ class WireguardKeyFragment : ServiceDependentFragment(OnNoService.GoToLaunchScre
     private var hasConnectivity = true
         set(value) {
             if (field != value) {
+                android.util.Log.d("mullvad", "WireguardKey hasConnectivity = $value")
                 field = value
                 updateStatusMessage()
                 updateGenerateKeyButtonState()
@@ -79,6 +120,7 @@ class WireguardKeyFragment : ServiceDependentFragment(OnNoService.GoToLaunchScre
 
     private var reconnectionExpected = false
         set(value) {
+            android.util.Log.d("mullvad", "WireguardKey reconnectionExpected = $value")
             field = value
 
             jobTracker.cancelJob("resetReconnectionExpected")
@@ -315,6 +357,7 @@ class WireguardKeyFragment : ServiceDependentFragment(OnNoService.GoToLaunchScre
     }
 
     private suspend fun onGenerateKeyPress() {
+        android.util.Log.d("mullvad", "onGenerateKeyPress")
         synchronized(this) {
             actionState = ActionState.Generating(keyStatus is KeygenEvent.NewKey)
             reconnectionExpected = !(tunnelState is TunnelState.Disconnected)
@@ -324,6 +367,7 @@ class WireguardKeyFragment : ServiceDependentFragment(OnNoService.GoToLaunchScre
         keyStatusListener.generateKey().join()
 
         actionState = ActionState.Idle(false)
+        android.util.Log.d("mullvad", "onGenerateKeyPress finished")
     }
 
     private suspend fun onValidateKeyPress() {

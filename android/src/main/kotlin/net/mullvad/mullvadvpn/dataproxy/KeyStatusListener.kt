@@ -12,6 +12,27 @@ class KeyStatusListener(val daemon: MullvadDaemon) {
     var keyStatus: KeygenEvent? = null
         private set(value) {
             synchronized(this) {
+                when (value) {
+                    null -> android.util.Log.d("mullvad", "keyStatus = null")
+                    is KeygenEvent.NewKey -> {
+                        val verified = when (value.verified) {
+                            null -> "null"
+                            true -> "verified"
+                            false -> "not verified"
+                        }
+
+                        val publicKey = value.publicKey
+                        val failure = value.replacementFailure
+
+                        android.util.Log.d("mullvad", "keyStatus = NewKey($publicKey, $verified, $failure)")
+                    }
+                    is KeygenEvent.TooManyKeys -> {
+                        android.util.Log.d("mullvad", "keyStatus = TooManyKeys")
+                    }
+                    is KeygenEvent.GenerationFailure -> {
+                        android.util.Log.d("mullvad", "keyStatus = GenerationFailure")
+                    }
+                }
                 field = value
 
                 if (value != null) {
@@ -38,15 +59,20 @@ class KeyStatusListener(val daemon: MullvadDaemon) {
     }
 
     fun generateKey() = GlobalScope.launch(Dispatchers.Default) {
+        android.util.Log.d("mullvad", "KeyStatusListener.generateKey()")
         setUpJob.join()
         val oldStatus = keyStatus
+        android.util.Log.d("mullvad", "  generating key")
         val newStatus = daemon.generateWireguardKey()
+        android.util.Log.d("mullvad", "  key generation finished")
         val newFailure = newStatus?.failure()
         if (oldStatus is KeygenEvent.NewKey && newFailure != null) {
+            android.util.Log.d("mullvad", "  key generation failed")
             keyStatus = KeygenEvent.NewKey(oldStatus.publicKey,
                             oldStatus.verified,
                             newFailure)
         } else {
+            android.util.Log.d("mullvad", "  key generation complete")
             keyStatus = newStatus ?: KeygenEvent.GenerationFailure()
         }
     }
