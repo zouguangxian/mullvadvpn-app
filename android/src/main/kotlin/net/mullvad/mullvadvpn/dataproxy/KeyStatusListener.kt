@@ -44,6 +44,7 @@ class KeyStatusListener(val daemon: MullvadDaemon) {
     var onKeyStatusChange: ((KeygenEvent) -> Unit)? = null
         set(value) {
             field = value
+            android.util.Log.d("mullvad", "Listener set to $value")
 
             synchronized(this) {
                 keyStatus?.let { status -> value?.invoke(status) }

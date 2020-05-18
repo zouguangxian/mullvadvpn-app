@@ -203,7 +203,29 @@ class WireguardKeyFragment : ServiceDependentFragment(OnNoService.GoToLaunchScre
             }
         }
 
+        android.util.Log.d("mullvad", "WireguardKey Configuring listener")
         keyStatusListener.onKeyStatusChange = { newKeyStatus ->
+            when (newKeyStatus) {
+                null -> android.util.Log.d("mullvad", "WireguardKey newKeyStatus = null")
+                is KeygenEvent.NewKey -> {
+                    val verified = when (newKeyStatus.verified) {
+                        null -> "null"
+                        true -> "verified"
+                        false -> "not verified"
+                    }
+
+                    val publicKey = newKeyStatus.publicKey
+                    val failure = newKeyStatus.replacementFailure
+
+                    android.util.Log.d("mullvad", "WireguardKey newKeyStatus = NewKey($publicKey, $verified, $failure)")
+                }
+                is KeygenEvent.TooManyKeys -> {
+                    android.util.Log.d("mullvad", "WireguardKey newKeyStatus = TooManyKeys")
+                }
+                is KeygenEvent.GenerationFailure -> {
+                    android.util.Log.d("mullvad", "WireguardKey newKeyStatus = GenerationFailure")
+                }
+            }
             jobTracker.newUiJob("keyStatusUpdate") {
                 keyStatus = newKeyStatus
             }
@@ -221,6 +243,7 @@ class WireguardKeyFragment : ServiceDependentFragment(OnNoService.GoToLaunchScre
             actionState = ActionState.Idle(false)
         }
 
+        android.util.Log.d("mullvad", "WireguardKey Clearing listener")
         keyStatusListener.onKeyStatusChange = null
         jobTracker.cancelAllJobs()
     }
@@ -264,10 +287,12 @@ class WireguardKeyFragment : ServiceDependentFragment(OnNoService.GoToLaunchScre
     }
 
     private fun updateStatusMessage() {
+        android.util.Log.d("mullvad", "WireguardKey Updating status message")
         when (val state = actionState) {
             is ActionState.Generating -> statusMessage.visibility = View.GONE
             is ActionState.Verifying -> statusMessage.visibility = View.GONE
             is ActionState.Idle -> {
+                android.util.Log.d("mullvad", "WireguardKey Showing status message")
                 if (hasConnectivity) {
                     updateKeyStatus(state.verified, keyStatus)
                 } else {
@@ -279,8 +304,10 @@ class WireguardKeyFragment : ServiceDependentFragment(OnNoService.GoToLaunchScre
 
     private fun updateOfflineStatus() {
         if (reconnectionExpected) {
+            android.util.Log.d("mullvad", "WireguardKey Status reconnecting")
             setStatusMessage(R.string.wireguard_key_reconnecting, greenColor)
         } else {
+            android.util.Log.d("mullvad", "WireguardKey Status blocked")
             setStatusMessage(R.string.wireguard_key_blocked_state_message, redColor)
         }
     }
@@ -290,16 +317,19 @@ class WireguardKeyFragment : ServiceDependentFragment(OnNoService.GoToLaunchScre
             val replacementFailure = keyStatus.replacementFailure
 
             if (replacementFailure != null) {
+                android.util.Log.d("mullvad", "WireguardKey Status error ($replacementFailure)")
                 setStatusMessage(failureMessage(replacementFailure), redColor)
             } else {
                 updateKeyIsValid(verificationWasDone, keyStatus.verified)
             }
         } else {
+            android.util.Log.d("mullvad", "WireguardKey Status hidden (not verified)")
             statusMessage.visibility = View.GONE
         }
     }
 
     private fun updateKeyIsValid(verificationWasDone: Boolean, verified: Boolean?) {
+        android.util.Log.d("mullvad", "WireguardKey updateKeyIsValid($verificationWasDone, $verified)")
         when (verified) {
             true -> setStatusMessage(R.string.wireguard_key_valid, greenColor)
             false -> setStatusMessage(R.string.wireguard_key_invalid, redColor)
