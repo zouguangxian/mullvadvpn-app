@@ -231,6 +231,18 @@ impl DaemonRpcClient {
         self.call("factory_reset", &NO_ARGS)
     }
 
+    pub fn get_split_tunnel_apps(&mut self) -> Result<Vec<String>> {
+        self.call("get_split_tunnel_apps", &NO_ARGS)
+    }
+
+    pub fn add_split_tunnel_app(&mut self, path: String) -> Result<()> {
+        self.call("add_split_tunnel_app", &[path])
+    }
+
+    pub fn remove_split_tunnel_app(&mut self, path: String) -> Result<()> {
+        self.call("remove_split_tunnel_app", &[path])
+    }
+
     pub fn update_relay_settings(&mut self, update: RelaySettingsUpdate) -> Result<()> {
         self.call("update_relay_settings", &[update])
     }

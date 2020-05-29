@@ -194,6 +194,18 @@ build_rpc_trait! {
         #[rpc(meta, name = "clear_split_tunnel_processes")]
         fn clear_split_tunnel_processes(&self, Self::Metadata) -> BoxFuture<(), Error>;
 
+        /// Retrieve a list of paths to applications to exclude from the tunnel
+        #[rpc(meta, name = "get_split_tunnel_apps")]
+        fn get_split_tunnel_apps(&self, Self::Metadata) -> BoxFuture<Vec<String>, Error>;
+
+        /// Add a path to an application to exclude from the tunnel
+        #[rpc(meta, name = "add_split_tunnel_app")]
+        fn add_split_tunnel_app(&self, Self::Metadata, String) -> BoxFuture<(), Error>;
+
+        /// Stop excluding a given application from the tunnel
+        #[rpc(meta, name = "remove_split_tunnel_app")]
+        fn remove_split_tunnel_app(&self, Self::Metadata, String) -> BoxFuture<(), Error>;
+
         #[pubsub(name = "daemon_event")] {
             /// Subscribes to events from the daemon.
             #[rpc(name = "daemon_event_subscribe")]
@@ -815,6 +827,47 @@ impl ManagementInterfaceApi for ManagementInterface {
         }
     }
 
+    fn get_split_tunnel_apps(&self, _: Self::Metadata) -> BoxFuture<Vec<String>, Error> {
+        #[cfg(windows)]
+        {
+            log::debug!("get_split_tunnel_apps");
+            let (tx, rx) = sync::oneshot::channel();
+            let future = self
+                .send_command_to_daemon(DaemonCommand::GetSplitTunnelApps(tx))
+                .and_then(|_| rx.map_err(|_| Error::internal_error()));
+            Box::new(future)
+        }
+        #[cfg(not(windows))]
+        Box::new(future::ok(Vec::with_capacity(0)))
+    }
+
+    #[cfg(windows)]
+    fn add_split_tunnel_app(&self, _: Self::Metadata, path: String) -> BoxFuture<(), Error> {
+        log::debug!("add_split_tunnel_app");
+        let (tx, rx) = sync::oneshot::channel();
+        let future = self
+            .send_command_to_daemon(DaemonCommand::AddSplitTunnelApp(tx, path))
+            .and_then(|_| rx.map_err(|_| Error::internal_error()));
+        Box::new(future)
+    }
+    #[cfg(not(windows))]
+    fn add_split_tunnel_app(&self, _: Self::Metadata, _path: String) -> BoxFuture<(), Error> {
+        Box::new(future::ok(()))
+    }
+
+    #[cfg(windows)]
+    fn remove_split_tunnel_app(&self, _: Self::Metadata, path: String) -> BoxFuture<(), Error> {
+        log::debug!("remove_split_tunnel_app");
+        let (tx, rx) = sync::oneshot::channel();
+        let future = self
+            .send_command_to_daemon(DaemonCommand::RemoveSplitTunnelApp(tx, path))
+            .and_then(|_| rx.map_err(|_| Error::internal_error()));
+        Box::new(future)
+    }
+    #[cfg(not(windows))]
+    fn remove_split_tunnel_app(&self, _: Self::Metadata, _path: String) -> BoxFuture<(), Error> {
+        Box::new(future::ok(()))
+    }
 
     fn daemon_event_subscribe(
         &self,
