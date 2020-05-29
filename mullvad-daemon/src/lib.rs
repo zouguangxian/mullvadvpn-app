@@ -55,7 +55,7 @@ use std::{
     thread,
     time::Duration,
 };
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", windows))]
 use talpid_core::split_tunnel;
 use talpid_core::{
     mpsc::Sender,
@@ -97,7 +97,7 @@ pub enum Error {
     #[error(display = "Unable to load account history with wireguard key cache")]
     LoadAccountHistory(#[error(source)] account_history::Error),
 
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", windows))]
     #[error(display = "Unable to initialize split tunneling")]
     InitSplitTunneling(#[error(source)] split_tunnel::Error),
 
@@ -467,6 +467,8 @@ pub struct Daemon<L: EventListener> {
     last_generated_bridge_relay: Option<Relay>,
     app_version_info: AppVersionInfo,
     shutdown_callbacks: Vec<Box<dyn FnOnce()>>,
+    #[cfg(windows)]
+    split_tunnel: split_tunnel::SplitTunnel,
     /// oneshot channel that completes once the tunnel state machine has been shut down
     tunnel_state_machine_shutdown_signal: oneshot::Receiver<()>,
     cache_dir: PathBuf,
@@ -589,6 +591,9 @@ where
             TargetState::Unsecured
         };
 
+        #[cfg(windows)]
+        let split_tunnel = split_tunnel::SplitTunnel::new().map_err(Error::InitSplitTunneling)?;
+
         let mut daemon = Daemon {
             tunnel_command_tx,
             tunnel_state: TunnelState::Disconnected,
@@ -612,6 +617,8 @@ where
             last_generated_bridge_relay: None,
             app_version_info,
             shutdown_callbacks: vec![],
+            #[cfg(windows)]
+            split_tunnel,
             tunnel_state_machine_shutdown_signal,
             cache_dir,
         };
