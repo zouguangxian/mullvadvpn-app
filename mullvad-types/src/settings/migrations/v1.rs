@@ -71,6 +71,8 @@ impl super::SettingsMigration for Migration {
                 auto_connect: old.auto_connect,
                 tunnel_options: old.tunnel_options,
                 show_beta_releases: false,
+                #[cfg(windows)]
+                excluded_apps: Vec::new(),
                 settings_version: super::SettingsVersion::V2,
             }),
             VersionedSettings::V2(new) => VersionedSettings::V2(new),

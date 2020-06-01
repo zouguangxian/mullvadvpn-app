@@ -1442,30 +1442,58 @@ where
     fn on_get_split_tunnel_apps(&mut self, tx: oneshot::Sender<Vec<String>>) {
         Self::oneshot_send(
             tx,
-            self.split_tunnel.get_paths().to_vec(),
+            self.settings.to_settings().excluded_apps,
             "get_split_tunnel_apps response",
         );
     }
 
     #[cfg(windows)]
     fn on_add_split_tunnel_app(&mut self, tx: oneshot::Sender<()>, path: String) {
-        match self.split_tunnel.add_path(&path) {
-            Ok(()) => Self::oneshot_send(tx, (), "add_split_tunnel_app response"),
-            Err(e) => log::error!(
-                "{}",
-                e.display_chain_with_msg("Failed to add path to excluded apps list")
-            ),
+        let save_result = self.settings.add_split_tunnel_app(&path);
+        match save_result {
+            Ok(false) => Self::oneshot_send(tx, (), "add_split_tunnel_app response"),
+            Ok(true) => {
+                match self
+                    .split_tunnel
+                    .set_paths(&self.settings.to_settings().excluded_apps)
+                {
+                    Ok(_) => Self::oneshot_send(tx, (), "add_split_tunnel_app response"),
+                    Err(e) => {
+                        log::error!(
+                            "{}",
+                            e.display_chain_with_msg("Failed to set excluded apps list")
+                        );
+                    }
+                }
+                self.event_listener
+                    .notify_settings(self.settings.to_settings());
+            }
+            Err(e) => error!("{}", e.display_chain_with_msg("Unable to save settings")),
         }
     }
 
     #[cfg(windows)]
     fn on_remove_split_tunnel_app(&mut self, tx: oneshot::Sender<()>, path: String) {
-        match self.split_tunnel.remove_path(&path) {
-            Ok(()) => Self::oneshot_send(tx, (), "remove_split_tunnel_app response"),
-            Err(e) => log::error!(
-                "{}",
-                e.display_chain_with_msg("Failed to remove path from excluded apps list")
-            ),
+        let save_result = self.settings.remove_split_tunnel_app(&path);
+        match save_result {
+            Ok(false) => Self::oneshot_send(tx, (), "remove_split_tunnel_app response"),
+            Ok(true) => {
+                match self
+                    .split_tunnel
+                    .set_paths(&self.settings.to_settings().excluded_apps)
+                {
+                    Ok(_) => Self::oneshot_send(tx, (), "remove_split_tunnel_app response"),
+                    Err(e) => {
+                        log::error!(
+                            "{}",
+                            e.display_chain_with_msg("Failed to set excluded apps list")
+                        );
+                    }
+                }
+                self.event_listener
+                    .notify_settings(self.settings.to_settings());
+            }
+            Err(e) => error!("{}", e.display_chain_with_msg("Unable to save settings")),
         }
     }
 

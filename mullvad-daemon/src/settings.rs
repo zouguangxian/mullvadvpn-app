@@ -246,6 +246,34 @@ impl SettingsPersister {
         self.update(should_save)
     }
 
+    #[cfg(windows)]
+    pub fn add_split_tunnel_app(&mut self, path: &str) -> Result<bool, Error> {
+        let should_save = !self
+            .settings
+            .excluded_apps
+            .iter()
+            .any(|curpath| curpath == path);
+        if should_save {
+            self.settings.excluded_apps.push(path.to_string());
+        }
+        self.update(should_save)
+    }
+
+    #[cfg(windows)]
+    pub fn remove_split_tunnel_app(&mut self, path: &str) -> Result<bool, Error> {
+        let should_save = self
+            .settings
+            .excluded_apps
+            .iter()
+            .any(|curpath| curpath == path);
+        if should_save {
+            self.settings
+                .excluded_apps
+                .retain(|curpath| curpath != path);
+        }
+        self.update(should_save)
+    }
+
     fn update_field<T: Eq>(field: &mut T, new_value: T) -> bool {
         if *field != new_value {
             *field = new_value;
