@@ -50,12 +50,21 @@ pub struct Settings {
     /// Whether to notify users of beta updates.
     #[serde(deserialize_with = "deserialize_show_beta_releases")]
     pub show_beta_releases: bool,
+    /// Whether to enable split tunneling for [`Settings::excluded_apps`].
+    #[cfg(windows)]
+    #[serde(default = "default_exclusions_flag")]
+    pub enable_exclusions: bool,
     /// List of applications to exclude from the tunnel.
     #[cfg(windows)]
     pub excluded_apps: Vec<String>,
     /// Specifies settings schema version
     #[cfg_attr(target_os = "android", jnix(skip))]
     settings_version: migrations::SettingsVersion,
+}
+
+#[cfg(windows)]
+fn default_exclusions_flag() -> bool {
+    true
 }
 
 impl Default for Settings {
@@ -75,6 +84,8 @@ impl Default for Settings {
             auto_connect: false,
             tunnel_options: TunnelOptions::default(),
             show_beta_releases: false,
+            #[cfg(windows)]
+            enable_exclusions: default_exclusions_flag(),
             #[cfg(windows)]
             excluded_apps: Vec::new(),
             settings_version: migrations::SettingsVersion::V2,

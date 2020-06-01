@@ -72,6 +72,8 @@ impl super::SettingsMigration for Migration {
                 tunnel_options: old.tunnel_options,
                 show_beta_releases: false,
                 #[cfg(windows)]
+                enable_exclusions: true,
+                #[cfg(windows)]
                 excluded_apps: Vec::new(),
                 settings_version: super::SettingsVersion::V2,
             }),
