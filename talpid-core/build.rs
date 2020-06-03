@@ -8,6 +8,7 @@ mod win {
     pub static WINFW_BUILD_DIR: &'static str = "..\\windows\\winfw\\bin";
     pub static WINDNS_BUILD_DIR: &'static str = "..\\windows\\windns\\bin";
     pub static WINNET_BUILD_DIR: &'static str = "..\\windows\\winnet\\bin";
+    pub static WINEXCLUDE_BUILD_DIR: &'static str = "..\\windows\\winexclude\\bin";
 
     pub fn default_windows_build_artifact_dir(build_dir: &str) -> PathBuf {
         manifest_dir().join(build_dir).join(&target_platform_dir())
@@ -52,9 +53,11 @@ fn main() {
     const WINFW_DIR_VAR: &str = "WINFW_LIB_DIR";
     const WINDNS_DIR_VAR: &str = "WINDNS_LIB_DIR";
     const WINNET_DIR_VAR: &str = "WINNET_LIB_DIR";
+    const WINEXCLUDE_DIR_VAR: &str = "WINEXCLUDE_LIB_DIR";
     declare_library(WINFW_DIR_VAR, WINFW_BUILD_DIR, "winfw");
     declare_library(WINDNS_DIR_VAR, WINDNS_BUILD_DIR, "windns");
     declare_library(WINNET_DIR_VAR, WINNET_BUILD_DIR, "winnet");
+    declare_library(WINEXCLUDE_DIR_VAR, WINEXCLUDE_BUILD_DIR, "winexclude");
     let lib_dir = manifest_dir().join("../build/lib/x86_64-pc-windows-msvc");
     println!("cargo:rustc-link-search={}", &lib_dir.display());
     println!("cargo:rustc-link-lib=dylib=libwg");
