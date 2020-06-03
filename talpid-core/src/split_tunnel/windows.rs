@@ -1,5 +1,6 @@
 use self::winexclude::*;
 use crate::logging::windows::log_sink;
+use std::{ffi::OsStr, os::windows::ffi::OsStrExt};
 
 const LOGGING_CONTEXT: &[u8] = b"WinExclude\0";
 
@@ -16,9 +17,7 @@ pub enum Error {
 }
 
 /// Manages applications whose traffic to exclude from the tunnel.
-pub struct SplitTunnel {
-    paths: Vec<String>,
-}
+pub struct SplitTunnel(());
 
 impl SplitTunnel {
     /// Initialize the driver.
@@ -28,18 +27,23 @@ impl SplitTunnel {
         } {
             return Err(Error::InitializationFailed);
         }
-        Ok(SplitTunnel { paths: vec![] })
+        Ok(SplitTunnel(()))
     }
 
     /// Set a list of applications to exclude from the tunnel.
-    pub fn set_paths<T: AsRef<str>>(&mut self, paths: &[T]) -> Result<(), Error> {
-        self.paths.clear();
+    pub fn set_paths<T: AsRef<OsStr>>(&mut self, paths: &[T]) -> Result<(), Error> {
+        let mut u16_paths = Vec::<Vec<u16>>::new();
+
         for path in paths {
-            self.paths.push(path.as_ref().to_string());
+            let mut u16_path: Vec<u16> = path.as_ref().encode_wide().collect();
+            u16_path.push(0u16);
+            u16_paths.push(u16_path);
         }
 
-        // WinExclude_SetAppPaths
-        Ok(())
+        let mut u16_paths_ptrs: Vec<_> = u16_paths.iter().map(|path| path.as_ptr()).collect();
+        u16_paths_ptrs.push(std::ptr::null());
+
+        unsafe { WinExclude_SetAppPaths(u16_paths_ptrs.as_ptr()) }.into()
     }
 }
 
