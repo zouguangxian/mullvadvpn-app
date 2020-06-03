@@ -1,0 +1,5 @@
+LIBRARY winexclude
+EXPORTS
+	WinExclude_Initialize
+	WinExclude_SetAppPaths
+	WinExclude_Deinitialize

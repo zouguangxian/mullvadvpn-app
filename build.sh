@@ -201,6 +201,7 @@ if [[ "$BUILD_MODE" == "release" && "$(uname -s)" == "MINGW"* ]]; then
         windows/windns/bin/x64-Release/windns.dll
         windows/winnet/bin/x64-Release/winnet.dll
         windows/winutil/bin/x64-Release/winutil.dll
+        windows/winexclude/bin/x64-Release/winexclude.dll
         windows/driverlogic/bin/x64-Release/driverlogic.exe
         windows/nsis-plugins/bin/Win32-Release/*.dll
         build/lib/x86_64-pc-windows-msvc/libwg.dll
