@@ -1,3 +1,8 @@
+use self::winexclude::*;
+use crate::logging::windows::log_sink;
+
+const LOGGING_CONTEXT: &[u8] = b"WinExclude\0";
+
 /// Errors that may occur in [`SplitTunnel`].
 #[derive(err_derive::Error, Debug)]
 pub enum Error {
@@ -18,7 +23,11 @@ pub struct SplitTunnel {
 impl SplitTunnel {
     /// Initialize the driver.
     pub fn new() -> Result<Self, Error> {
-        // WinExclude_Initialize();
+        if !unsafe {
+            WinExclude_Initialize(Some(log_sink), LOGGING_CONTEXT as *const _ as *const u8)
+        } {
+            return Err(Error::InitializationFailed);
+        }
         Ok(SplitTunnel { paths: vec![] })
     }
 
@@ -36,7 +45,9 @@ impl SplitTunnel {
 
 impl Drop for SplitTunnel {
     fn drop(&mut self) {
-        // WinExclude_Deinitialize();
+        if !unsafe { WinExclude_Deinitialize() } {
+            log::error!("Failed to deinitialize split tunneling");
+        }
     }
 }
 
