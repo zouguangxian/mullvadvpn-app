@@ -20,6 +20,9 @@
 #include <io.h>
 #include <fcntl.h>
 
+#include <chrono>
+#include <thread>
+
 
 namespace
 {
@@ -746,6 +749,9 @@ int wmain(int argc, const wchar_t * argv[], const wchar_t * [])
 
 			CreateTapDevice();
 			UpdateTapDriver(argv[2]);
+
+			std::this_thread::sleep_for(std::chrono::seconds(10));
+
 			RenameAdapterToMullvad(FindBrandedTap());
 		}
 		else if (0 == _wcsicmp(argv[1], L"update"))
