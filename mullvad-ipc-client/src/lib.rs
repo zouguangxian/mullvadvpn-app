@@ -243,6 +243,10 @@ impl DaemonRpcClient {
         self.call("remove_split_tunnel_app", &[path])
     }
 
+    pub fn set_split_tunnel_status(&mut self, enabled: bool) -> Result<()> {
+        self.call("set_split_tunnel_status", &[enabled])
+    }
+
     pub fn update_relay_settings(&mut self, update: RelaySettingsUpdate) -> Result<()> {
         self.call("update_relay_settings", &[update])
     }

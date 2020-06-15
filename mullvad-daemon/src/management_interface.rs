@@ -206,6 +206,10 @@ build_rpc_trait! {
         #[rpc(meta, name = "remove_split_tunnel_app")]
         fn remove_split_tunnel_app(&self, Self::Metadata, String) -> BoxFuture<(), Error>;
 
+        /// Enable or disable split tunnel
+        #[rpc(meta, name = "set_split_tunnel_state")]
+        fn set_split_tunnel_state(&self, Self::Metadata, bool) -> BoxFuture<(), Error>;
+
         #[pubsub(name = "daemon_event")] {
             /// Subscribes to events from the daemon.
             #[rpc(name = "daemon_event_subscribe")]
@@ -866,6 +870,20 @@ impl ManagementInterfaceApi for ManagementInterface {
     }
     #[cfg(not(windows))]
     fn remove_split_tunnel_app(&self, _: Self::Metadata, _path: String) -> BoxFuture<(), Error> {
+        Box::new(future::ok(()))
+    }
+
+    #[cfg(windows)]
+    fn set_split_tunnel_state(&self, _: Self::Metadata, enabled: bool) -> BoxFuture<(), Error> {
+        log::debug!("set_split_tunnel_state");
+        let (tx, rx) = sync::oneshot::channel();
+        let future = self
+            .send_command_to_daemon(DaemonCommand::SetSplitTunnelState(tx, enabled))
+            .and_then(|_| rx.map_err(|_| Error::internal_error()));
+        Box::new(future)
+    }
+    #[cfg(not(windows))]
+    fn set_split_tunnel_state(&self, _: Self::Metadata, _enabled: bool) -> BoxFuture<(), Error> {
         Box::new(future::ok(()))
     }
 
