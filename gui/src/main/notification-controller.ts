@@ -97,8 +97,6 @@ export default class NotificationController {
       this.addPendingNotification(notification);
       notification.show();
 
-      setTimeout(() => notification.close(), 4000);
-
       return notification;
     } else {
       return;
