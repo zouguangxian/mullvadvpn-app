@@ -41,7 +41,6 @@ const config = {
     category: 'public.app-category.tools',
     extendInfo: {
       LSUIElement: true,
-      NSUserNotificationAlertStyle: 'alert',
     },
     extraResources: [
       { from: distAssets('mullvad'), to: '.' },
