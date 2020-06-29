@@ -76,4 +76,21 @@ if [ -d "$OLD_CACHE_DIR" ]; then
     rm -rf "$OLD_CACHE_DIR"
 fi
 
+# Change notification style from 'alert' to 'banner'
+NC_PREFS_FILE="$HOME/Library/Preferences/com.apple.ncprefs.plist"
+BANNER_BIT=8
+ALERT_BIT=16
+apps_count=$(/usr/libexec/PlistBuddy -c "Print :apps" "$NC_PREFS_FILE" | grep -c "bundle-id")
+for i in $(seq 1 $[$apps_count - 1]); do
+    bundle_id=$(/usr/libexec/PlistBuddy -c "Print :apps:$i:bundle-id" "$NC_PREFS_FILE")
+    flags=$(/usr/libexec/PlistBuddy -c "Print :apps:$i:flags" "$NC_PREFS_FILE")
+    if [ $bundle_id == "net.mullvad.vpn" ] && (($flags & $ALERT_BIT)); then
+        echo "Switching notification style from 'alert' to 'banner'"
+        new_flags=$[$flags - $ALERT_BIT + $BANNER_BIT]
+        /usr/libexec/PlistBuddy -c "Set :apps:$i:flags $new_flags" "$NC_PREFS_FILE"
+        killall sighup usernoted
+        killall sighup NotificationCenter
+    fi
+done
+
 rm -f "$NEW_CACHE_DIR/relays.json" || true
