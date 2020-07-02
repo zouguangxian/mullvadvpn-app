@@ -9,7 +9,7 @@ import net.mullvad.mullvadvpn.R
 import net.mullvad.mullvadvpn.util.JobTracker
 
 class AppListAdapter(context: Context) : Adapter<AppListHolder>() {
-    private val appList = ArrayList<ApplicationInfo>()
+    private val appList = ArrayList<AppInfo>()
     private val jobTracker = JobTracker()
     private val packageManager = context.packageManager
 
@@ -33,7 +33,9 @@ class AppListAdapter(context: Context) : Adapter<AppListHolder>() {
     }
 
     private fun populateAppList(context: Context) {
-        val applications = context.packageManager.getInstalledApplications(0)
+        val applications = packageManager
+            .getInstalledApplications(0)
+            .map { info -> AppInfo(info, packageManager.getApplicationLabel(info).toString()) }
 
         appList.clear()
         appList.addAll(applications)
