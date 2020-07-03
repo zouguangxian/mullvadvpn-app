@@ -5,6 +5,7 @@ import android.content.pm.ApplicationInfo
 import android.support.v7.widget.RecyclerView.Adapter
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import kotlin.properties.Delegates.observable
 import net.mullvad.mullvadvpn.R
 import net.mullvad.mullvadvpn.util.JobTracker
 
@@ -13,13 +14,23 @@ class AppListAdapter(context: Context) : Adapter<AppListHolder>() {
     private val jobTracker = JobTracker()
     private val packageManager = context.packageManager
 
+    var enabled by observable(false) { _, oldValue, newValue ->
+        if (oldValue != newValue) {
+            if (newValue == true) {
+                notifyItemRangeInserted(0, appList.size)
+            } else {
+                notifyItemRangeRemoved(0, appList.size)
+            }
+        }
+    }
+
     init {
         jobTracker.newBackgroundJob("populateAppList") {
             populateAppList(context)
         }
     }
 
-    override fun getItemCount() = appList.size
+    override fun getItemCount() = if (enabled) { appList.size } else { 0 }
 
     override fun onCreateViewHolder(parentView: ViewGroup, type: Int): AppListHolder {
         val inflater = LayoutInflater.from(parentView.context)
