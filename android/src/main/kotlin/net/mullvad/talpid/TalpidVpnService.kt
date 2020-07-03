@@ -7,6 +7,8 @@ import java.net.InetAddress
 import net.mullvad.talpid.tun_provider.TunConfig
 
 open class TalpidVpnService : VpnService() {
+    protected var disallowedApps: List<String>? = null
+
     val connectivityListener = ConnectivityListener()
 
     override fun onCreate() {
@@ -34,6 +36,12 @@ open class TalpidVpnService : VpnService() {
 
             for (route in config.routes) {
                 addRoute(route.address, route.prefixLength.toInt())
+            }
+
+            disallowedApps?.let { apps ->
+                for (app in apps) {
+                    addDisallowedApplication(app)
+                }
             }
 
             setMtu(config.mtu)
