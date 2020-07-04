@@ -74,6 +74,15 @@ class ConnectionProxy(val context: Context, val daemon: MullvadDaemon) {
         }
     }
 
+    fun replaceTun() {
+        if (anticipateReconnectingState()) {
+            cancelActiveAction()
+            activeAction = GlobalScope.launch(Dispatchers.Default) {
+                daemon.replaceTun()
+            }
+        }
+    }
+
     fun disconnect() {
         if (anticipateDisconnectingState()) {
             cancelActiveAction()
