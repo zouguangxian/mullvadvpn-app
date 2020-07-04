@@ -1,8 +1,10 @@
 package net.mullvad.mullvadvpn.service
 
 import kotlin.properties.Delegates.observable
+import net.mullvad.mullvadvpn.model.TunnelState
+import net.mullvad.talpid.tunnel.ActionAfterDisconnect
 
-class SplitTunnelling {
+class SplitTunnelling(private val connectionProxy: ConnectionProxy) {
     private val excludedApps = HashSet<String>()
 
     val excludedAppList
@@ -29,5 +31,21 @@ class SplitTunnelling {
 
     private fun update() {
         onChange?.invoke(excludedAppList)
+
+        val state = connectionProxy.uiState
+
+        val shouldReconnect = when (state) {
+            is TunnelState.Disconnected -> false
+            is TunnelState.Connecting -> true
+            is TunnelState.Connected -> true
+            is TunnelState.Disconnecting -> {
+                state.actionAfterDisconnect != ActionAfterDisconnect.Nothing
+            }
+            is TunnelState.Error -> state.errorState.isBlocking
+        }
+
+        if (shouldReconnect) {
+            connectionProxy.replaceTun()
+        }
     }
 }
