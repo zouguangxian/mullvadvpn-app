@@ -17,7 +17,10 @@ use std::{
     io,
     net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, UdpSocket},
     os::unix::io::{AsRawFd, FromRawFd, RawFd},
-    sync::Arc,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
     time::{Duration, Instant},
 };
 use talpid_types::android::AndroidContext;
@@ -75,6 +78,7 @@ pub struct AndroidTunProvider {
     object: GlobalRef,
     active_tun: Option<File>,
     last_tun_config: TunConfig,
+    replace_tun: Arc<AtomicBool>,
     allow_lan: bool,
 }
 
@@ -111,6 +115,7 @@ impl AndroidTunProvider {
             object: context.vpn_service,
             active_tun: None,
             last_tun_config: initial_tun_config,
+            replace_tun: context.replace_tun,
             allow_lan,
         }
     }
@@ -259,7 +264,10 @@ impl AndroidTunProvider {
     }
 
     fn get_tun_fd(&mut self, config: TunConfig) -> Result<RawFd, Error> {
-        if self.active_tun.is_none() || self.last_tun_config != config {
+        if self.active_tun.is_none()
+            || self.last_tun_config != config
+            || self.replace_tun.load(Ordering::Acquire)
+        {
             self.open_tun(config)?;
         }
 
@@ -348,6 +356,7 @@ impl AndroidTunProvider {
 
                 self.active_tun = Some(tun);
                 self.last_tun_config = config;
+                self.replace_tun.store(false, Ordering::Release);
 
                 Ok(())
             }
