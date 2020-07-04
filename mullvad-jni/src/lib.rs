@@ -22,7 +22,7 @@ use mullvad_types::account::{AccountData, VoucherSubmission};
 use std::{
     path::{Path, PathBuf},
     ptr,
-    sync::{mpsc, Arc, Once},
+    sync::{atomic::AtomicBool, mpsc, Arc, Once},
     thread,
 };
 use talpid_types::{android::AndroidContext, ErrorExt};
@@ -184,6 +184,7 @@ fn create_android_context(
         vpn_service: env
             .new_global_ref(vpn_service)
             .map_err(Error::CreateGlobalReference)?,
+        replace_tun: Arc::new(AtomicBool::new(false)),
     })
 }
 
