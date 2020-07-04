@@ -723,6 +723,23 @@ pub extern "system" fn Java_net_mullvad_mullvadvpn_service_MullvadDaemon_reconne
 
 #[no_mangle]
 #[allow(non_snake_case)]
+pub extern "system" fn Java_net_mullvad_mullvadvpn_service_MullvadDaemon_replaceTun(
+    _: JNIEnv<'_>,
+    _: JObject<'_>,
+    daemon_interface_address: jlong,
+) {
+    if let Some(daemon_interface) = get_daemon_interface(daemon_interface_address) {
+        if let Err(error) = daemon_interface.replace_tun() {
+            log::error!(
+                "{}",
+                error.display_chain_with_msg("Failed to request daemon to replace the tun device")
+            );
+        }
+    }
+}
+
+#[no_mangle]
+#[allow(non_snake_case)]
 pub extern "system" fn Java_net_mullvad_mullvadvpn_service_MullvadDaemon_setAccount(
     env: JNIEnv<'_>,
     _: JObject<'_>,
