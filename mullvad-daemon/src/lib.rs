@@ -56,6 +56,8 @@ use std::{
     thread,
     time::Duration,
 };
+#[cfg(target_os = "android")]
+use std::sync::atomic::{AtomicBool, Ordering};
 #[cfg(target_os = "linux")]
 use talpid_core::split_tunnel;
 use talpid_core::{
@@ -241,6 +243,8 @@ pub enum DaemonCommand {
     /// Saves the target tunnel state and enters a blocking state. The state is restored
     /// upon restart.
     PrepareRestart,
+    #[cfg(target_os = "android")]
+    ReplaceTun,
 }
 
 /// All events that can happen in the daemon. Sent from various threads and exposed interfaces.
@@ -477,6 +481,8 @@ pub struct Daemon<L: EventListener> {
     /// oneshot channel that completes once the tunnel state machine has been shut down
     tunnel_state_machine_shutdown_signal: oneshot::Receiver<()>,
     cache_dir: PathBuf,
+    #[cfg(target_os = "android")]
+    replace_tun: Arc<AtomicBool>,
 }
 
 impl<L> Daemon<L>
@@ -554,6 +560,9 @@ where
             });
         }
 
+        #[cfg(target_os = "android")]
+        let replace_tun = android_context.replace_tun.clone();
+
         let tunnel_parameters_generator = MullvadTunnelParametersGenerator {
             tx: internal_event_tx.clone(),
         };
@@ -616,6 +625,8 @@ where
             shutdown_callbacks: vec![],
             tunnel_state_machine_shutdown_signal,
             cache_dir,
+            #[cfg(target_os = "android")]
+            replace_tun,
         };
 
         daemon.ensure_wireguard_keys_for_current_account();
@@ -1026,6 +1037,8 @@ where
             ClearSplitTunnelProcesses(tx) => self.on_clear_split_tunnel_processes(tx),
             Shutdown => self.trigger_shutdown_event(),
             PrepareRestart => self.on_prepare_restart(),
+            #[cfg(target_os = "android")]
+            ReplaceTun => self.on_replace_tun(),
         }
     }
 
@@ -1133,6 +1146,12 @@ where
         } else {
             debug!("Ignoring reconnect command. Currently not in secured state");
         }
+    }
+
+    #[cfg(target_os = "android")]
+    fn on_replace_tun(&mut self) {
+        self.replace_tun.store(true, Ordering::Release);
+        self.on_reconnect();
     }
 
     fn on_get_state(&self, tx: oneshot::Sender<TunnelState>) {
