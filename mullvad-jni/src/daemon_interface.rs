@@ -159,6 +159,12 @@ impl DaemonInterface {
         Ok(())
     }
 
+    pub fn replace_tun(&self) -> Result<()> {
+        self.send_command(DaemonCommand::ReplaceTun)?;
+
+        Ok(())
+    }
+
     pub fn get_wireguard_key(&self) -> Result<Option<wireguard::PublicKey>> {
         let (tx, rx) = oneshot::channel();
 
