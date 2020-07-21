@@ -29,7 +29,6 @@ mullvad-ipc-client = { path = "../mullvad-ipc-client" }
 mullvad-types = { path = "../mullvad-types" }
 mullvad-paths = { path = "../mullvad-paths" }
 talpid-types = { path = "../talpid-types" }
-talpid-ipc = { path = "../talpid-ipc" }
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1"

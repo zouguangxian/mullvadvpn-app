@@ -11,9 +11,7 @@ publish = false
 err-derive = "0.2.1"
 mullvad-types = { path = "../mullvad-types" }
 serde = "1.0"
-talpid-ipc = { path = "../talpid-ipc" }
 talpid-types = { path = "../talpid-types" }
-mullvad-paths = { path = "../mullvad-paths" }
 jsonrpc-client-core = { git = "https://github.com/mullvad/jsonrpc-client-rs", rev = "68aac55b" }
 jsonrpc-client-ipc = { git = "https://github.com/mullvad/jsonrpc-client-rs", rev = "68aac55b" }
 jsonrpc-client-pubsub = { git = "https://github.com/mullvad/jsonrpc-client-rs", rev = "68aac55b" }
