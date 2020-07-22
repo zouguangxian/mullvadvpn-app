@@ -28,6 +28,8 @@ Line wrap the file at 100 chars.                                              Th
 - Add fish shell completions for the mullvad CLI.
 - Reconnect with a new key when WireGuard key is rotated automatically, previously the tunnel would
   time out before reconnecting.
+- Add split tunneling menu under advanced settings in Linux app for launching applications outside
+  the VPN tunnel.
 
 ### Changed
 - Upgrade from Electron 7 to Electron 8.
