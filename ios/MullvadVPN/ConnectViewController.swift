@@ -10,10 +10,7 @@ import UIKit
 import NetworkExtension
 import os
 
-class ConnectViewController: UIViewController,
-    RootContainment,
-    TunnelControlViewControllerDelegate,
-    TunnelObserver,
+class ConnectViewController: UIViewController, RootContainment, TunnelObserver,
     SelectLocationDelegate
 {
 
@@ -21,6 +18,14 @@ class ConnectViewController: UIViewController,
     @IBOutlet var countryLabel: UILabel!
     @IBOutlet var cityLabel: UILabel!
     @IBOutlet var connectionPanel: ConnectionPanelView!
+    @IBOutlet var buttonsStackView: UIStackView!
+
+    private let connectButton = makeButton(style: .success)
+    private let disconnectButton = makeButton(style: .translucentDanger)
+    private let selectLocationButton = makeButton(style: .translucentNeutral)
+
+    private lazy var disconnectBlurView = Self.makeBlurButton(button: disconnectButton)
+    private lazy var selectLocationBlurView = Self.makeBlurButton(button: selectLocationButton)
 
     private let alertPresenter = AlertPresenter()
 
@@ -47,15 +52,19 @@ class ConnectViewController: UIViewController,
             setNeedsHeaderBarStyleAppearanceUpdate()
             updateSecureLabel()
             updateTunnelConnectionInfo()
+            updateButtons()
         }
     }
 
-    private var showedAccountView = false
+    private var showedAccountView = true
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
         connectionPanel.collapseButton.addTarget(self, action: #selector(handleConnectionPanelButton(_:)), for: .touchUpInside)
+        connectButton.addTarget(self, action: #selector(handleConnect(_:)), for: .touchUpInside)
+        disconnectButton.addTarget(self, action: #selector(handleDisconnect(_:)), for: .touchUpInside)
+        selectLocationButton.addTarget(self, action: #selector(handleSelectLocation(_:)), for: .touchUpInside)
 
         TunnelManager.shared.addObserver(self)
         self.tunnelState = TunnelManager.shared.tunnelState
@@ -65,14 +74,6 @@ class ConnectViewController: UIViewController,
         super.viewDidAppear(animated)
 
         showAccountViewForExpiredAccount()
-    }
-
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if case .embedTunnelControls = SegueIdentifier.Connect.from(segue: segue) {
-            let tunnelControlController = segue.destination as! TunnelControlViewController
-            tunnelControlController.view.translatesAutoresizingMaskIntoConstraints = false
-            tunnelControlController.delegate = self
-        }
     }
 
     // MARK: - TunnelObserver
@@ -85,21 +86,6 @@ class ConnectViewController: UIViewController,
 
     func tunnelPublicKeyDidChange(publicKey: WireguardPublicKey?) {
         // no-op
-    }
-
-    // MARK: - TunnelControlViewControllerDelegate
-
-    func tunnelControlViewController(_ controller: TunnelControlViewController, handleAction action: TunnelControlAction) {
-        switch action {
-        case .connect:
-            connectTunnel()
-
-        case .disconnect:
-            disconnectTunnel()
-
-        case .selectLocation:
-            showSelectLocation()
-        }
     }
 
     // MARK: - SelectLocationDelegate
@@ -128,6 +114,55 @@ class ConnectViewController: UIViewController,
     }
 
     // MARK: - Private
+
+    private class func makeBlurButton(button: AppButton) -> UIView {
+        let effectView = TranslucentButtonBlurView(effect: UIBlurEffect(style: .light))
+        effectView.contentView.addSubview(button)
+
+        NSLayoutConstraint.activate([
+            button.topAnchor.constraint(equalTo: effectView.contentView.topAnchor),
+            button.leadingAnchor.constraint(equalTo: effectView.contentView.leadingAnchor),
+            button.trailingAnchor.constraint(equalTo: effectView.contentView.trailingAnchor),
+            button.bottomAnchor.constraint(equalTo: effectView.contentView.bottomAnchor)
+        ])
+
+        return effectView
+    }
+
+    private class func makeButton(style: AppButton.Style) -> AppButton {
+        let button = AppButton(type: .custom)
+        button.style = style
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
+        return button
+    }
+
+    private func updateButtons() {
+        buttonsStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+
+        switch tunnelState {
+        case .disconnected:
+            selectLocationButton.setTitle(NSLocalizedString("Select location", comment: ""), for: .normal)
+            connectButton.setTitle(NSLocalizedString("Secure connection", comment: ""), for: .normal)
+
+            buttonsStackView.addArrangedSubview(selectLocationBlurView)
+            buttonsStackView.addArrangedSubview(connectButton)
+
+        case .connecting:
+            selectLocationButton.setTitle(NSLocalizedString("Switch location", comment: ""), for: .normal)
+            disconnectButton.setTitle(NSLocalizedString("Cancel", comment: ""), for: .normal)
+
+            buttonsStackView.addArrangedSubview(selectLocationBlurView)
+            buttonsStackView.addArrangedSubview(disconnectBlurView)
+
+        case .connected, .reconnecting, .disconnecting:
+            selectLocationButton.setTitle(NSLocalizedString("Switch location", comment: ""), for: .normal)
+            disconnectButton.setTitle(NSLocalizedString("Disconnect", comment: ""), for: .normal)
+
+            buttonsStackView.addArrangedSubview(selectLocationBlurView)
+            buttonsStackView.addArrangedSubview(disconnectBlurView)
+        }
+    }
 
     private func updateSecureLabel() {
         secureLabel.text = tunnelState.textForSecureLabel().uppercased()
@@ -237,6 +272,18 @@ class ConnectViewController: UIViewController,
 
     @objc func handleConnectionPanelButton(_ sender: Any) {
         connectionPanel.toggleConnectionInfoVisibility()
+    }
+
+    @objc func handleConnect(_ sender: Any) {
+        connectTunnel()
+    }
+
+    @objc func handleDisconnect(_ sender: Any) {
+        disconnectTunnel()
+    }
+
+    @objc func handleSelectLocation(_ sender: Any) {
+        showSelectLocation()
     }
 
 }
