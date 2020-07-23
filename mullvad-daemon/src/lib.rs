@@ -48,6 +48,7 @@ use settings::SettingsPersister;
 #[cfg(not(target_os = "android"))]
 use std::path::Path;
 use std::{
+    env,
     fs::{self, File},
     io,
     marker::PhantomData,
@@ -578,7 +579,9 @@ where
             wireguard::KeyManager::new(internal_event_tx.clone(), rpc_handle.clone());
 
         // Attempt to download a fresh relay list
-        relay_selector.update();
+        if env::var_os("MULLVAD_SKIP_INITIAL_RELAYS_DOWNLOAD").is_none() {
+            relay_selector.update();
+        }
 
         let initial_target_state = if settings.get_account_token().is_some() {
             if settings.auto_connect {

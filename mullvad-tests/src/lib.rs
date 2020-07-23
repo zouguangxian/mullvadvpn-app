@@ -1,8 +1,6 @@
 #![cfg(not(target_os = "android"))]
 
 use self::{mock_openvpn::MOCK_OPENVPN_ARGS_FILE, platform_specific::*};
-use futures::sync::oneshot;
-use jsonrpc_client_core::{Future, Transport};
 use jsonrpc_client_ipc::IpcTransport;
 use mullvad_ipc_client::DaemonRpcClient;
 use notify::{RawEvent, RecommendedWatcher, RecursiveMode, Watcher};
@@ -16,10 +14,20 @@ use std::{
     time::{Duration, Instant},
 };
 use tempfile::TempDir;
-use tokio::reactor::Handle;
 
 pub use notify::op::{self as watch_event, Op as WatchEvent};
 
+use parity_tokio_ipc::Endpoint as IpcEndpoint;
+use tonic::{
+    self,
+    transport::{Endpoint, Uri},
+};
+use tower::service_fn;
+
+mod openvpn_proto {
+    tonic::include_proto!("talpid_openvpn_plugin");
+}
+use openvpn_proto::openvpn_event_proxy_client::OpenvpnEventProxyClient;
 
 pub mod mock_openvpn;
 
@@ -205,6 +213,7 @@ fn prepare_test_dirs() -> (TempDir, PathBuf, PathBuf, PathBuf) {
     fs::create_dir(&settings_dir).expect("Failed to create settings directory");
 
     prepare_resource_dir(&resource_dir);
+    prepare_cache_dir(&cache_dir);
 
     (temp_dir, cache_dir, resource_dir, settings_dir)
 }
@@ -216,8 +225,10 @@ fn prepare_resource_dir(resource_dir: &Path) {
     fs::copy(MOCK_OPENVPN_EXECUTABLE_PATH, openvpn_binary)
         .expect("Failed to copy mock OpenVPN binary");
     File::create(talpid_openvpn_plugin).expect("Failed to create mock Talpid OpenVPN plugin");
+}
 
-    prepare_relay_list(resource_dir.join("relays.json"));
+fn prepare_cache_dir(cache_dir: &Path) {
+    prepare_relay_list(cache_dir.join("relays.json"));
 }
 
 fn prepare_relay_list<T: AsRef<Path>>(path: T) {
@@ -235,14 +246,25 @@ fn prepare_relay_list<T: AsRef<Path>>(path: T) {
                     "relays": [{
                         "hostname": "fakehost",
                         "ipv4_addr_in": "192.168.0.100",
-                        "ipv4_addr_exit": "192.168.0.101",
+                        "ipv6_addr_in": null,
                         "include_in_country": true,
+                        "active": true,
+                        "owned": false,
+                        "provider": "M247",
                         "weight": 100,
                         "tunnels": {
                             "openvpn": [ { "port": 1000, "protocol": "udp" } ],
                             "wireguard": []
                         }
-                    }]
+                    }],
+                    "location": {
+                      "country": "Sweden",
+                      "country_code": "se",
+                      "city": "Gothenburg",
+                      "city_code": "got",
+                      "latitude": 57.70887,
+                      "longitude": 11.97456
+                    }
                 }]
             }]
         }"#,
@@ -270,6 +292,7 @@ impl DaemonRunner {
 
         let expression = duct::cmd!(DAEMON_EXECUTABLE_PATH, "-v", "--disable-log-to-file")
             .dir("..")
+            .env("MULLVAD_SKIP_INITIAL_RELAYS_DOWNLOAD", "1")
             .env("MULLVAD_CACHE_DIR", cache_dir)
             .env("MULLVAD_RPC_SOCKET_PATH", rpc_socket_path.clone())
             .env("MULLVAD_RESOURCE_DIR", resource_dir)
@@ -297,7 +320,7 @@ impl DaemonRunner {
         wait_for_file(&self.rpc_socket_path);
         let socket_path: String = self.rpc_socket_path.to_string_lossy().to_string();
         mullvad_ipc_client::new_standalone_transport(socket_path, |path| {
-            IpcTransport::new(&path, &Handle::default())
+            IpcTransport::new(&path, &tokio01::reactor::Handle::default())
         })
         .map_err(|e| e.to_string())
         .map_err(|e| format!("Failed to construct an RPC client - {}", e))
@@ -347,35 +370,30 @@ impl Drop for DaemonRunner {
 }
 
 pub struct MockOpenVpnPluginRpcClient {
-    rpc: jsonrpc_client_core::ClientHandle,
+    runtime: tokio::runtime::Runtime,
+    rpc: OpenvpnEventProxyClient<tonic::transport::Channel>,
 }
 
 impl MockOpenVpnPluginRpcClient {
-    fn spawn_event_loop(address: String) -> Result<jsonrpc_client_core::ClientHandle> {
-        let (tx, rx) = oneshot::channel();
-        thread::spawn(move || {
-            let result = IpcTransport::new(&address, &Handle::default())
-                .map_err(|error| {
-                    format!("Failed to create Mock OpenVPN plugin RPC client: {}", error)
-                })
-                .map(Transport::into_client);
-            match result {
-                Ok((client, client_handle)) => {
-                    tx.send(Ok(client_handle)).unwrap();
-                    tokio::run(client.map_err(|e| {
-                        println!("RPC client failed: {}", e);
-                    }));
-                }
-                Err(e) => tx.send(Err(e)).unwrap(),
-            }
-        });
+    async fn spawn_event_loop(
+        address: String,
+    ) -> Result<OpenvpnEventProxyClient<tonic::transport::Channel>> {
+        // The URI will be ignored
+        let channel = Endpoint::from_static("lttp://[::]:50051")
+            .connect_with_connector(service_fn(move |_: Uri| {
+                IpcEndpoint::connect(address.clone())
+            }))
+            .await
+            .map_err(|e| format!("Failed to construct an RPC client - {}", e.to_string()))?;
 
-        rx.wait().unwrap()
+        Ok(OpenvpnEventProxyClient::new(channel))
     }
 
     pub fn new(address: String) -> Result<Self> {
-        let rpc = Self::spawn_event_loop(address)?;
-        Ok(MockOpenVpnPluginRpcClient { rpc })
+        let mut runtime = tokio::runtime::Runtime::new().unwrap();
+
+        let rpc = runtime.block_on(Self::spawn_event_loop(address))?;
+        Ok(MockOpenVpnPluginRpcClient { runtime, rpc })
     }
 
     pub fn up(&mut self) -> Result<()> {
@@ -403,9 +421,12 @@ impl MockOpenVpnPluginRpcClient {
         event: openvpn_plugin::EventType,
         env: HashMap<String, String>,
     ) -> Result<()> {
-        self.rpc
-            .call_method("openvpn_event", &(event, env))
-            .wait()
+        self.runtime
+            .block_on(self.rpc.event(openvpn_proto::EventType {
+                event: event as i16 as i32,
+                env,
+            }))
+            .map(|_| ())
             .map_err(|error| format!("Failed to send mock OpenVPN event {:?}: {}", event, error))
     }
 }
