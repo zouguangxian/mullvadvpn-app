@@ -20,22 +20,33 @@ pub fn get_subcommand() -> clap::App<'static, 'static> {
         )
 }
 
-pub fn get_constraint(matches: &clap::ArgMatches<'_>) -> Vec<String> {
+pub fn get_constraint(matches: &clap::ArgMatches<'_>) -> crate::proto::RelayLocation {
     let country_original = matches.value_of("country").unwrap();
     let country = country_original.to_lowercase();
     let city = matches.value_of("city").map(str::to_lowercase);
     let hostname = matches.value_of("hostname").map(str::to_lowercase);
 
     match (country_original, city, hostname) {
-        ("any", None, None) => Vec::new(),
+        ("any", None, None) => crate::proto::RelayLocation::default(),
         ("any", ..) => clap::Error::with_description(
             "City can't be given when selecting 'any' country",
             clap::ErrorKind::InvalidValue,
         )
         .exit(),
-        (_, None, None) => [country].to_vec(),
-        (_, Some(city), None) => [country, city].to_vec(),
-        (_, Some(city), Some(hostname)) => [country, city, hostname].to_vec(),
+        (_, None, None) => crate::proto::RelayLocation {
+            country,
+            ..Default::default()
+        },
+        (_, Some(city), None) => crate::proto::RelayLocation {
+            country,
+            city,
+            ..Default::default()
+        },
+        (_, Some(city), Some(hostname)) => crate::proto::RelayLocation {
+            country,
+            city,
+            hostname,
+        },
         (..) => clap::Error::with_description(
             "Invalid country, city and hostname combination given",
             clap::ErrorKind::InvalidValue,
