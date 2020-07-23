@@ -8,6 +8,7 @@ use mullvad_daemon::{
 };
 use std::{path::PathBuf, thread, time::Duration};
 use talpid_types::ErrorExt;
+use tokio02 as tokio;
 
 mod cli;
 mod exception_logging;
@@ -17,13 +18,14 @@ mod system_service;
 
 const DAEMON_LOG_FILENAME: &str = "daemon.log";
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let config = cli::get_config();
     let log_dir = init_logging(config).unwrap_or_else(|error| {
         eprintln!("{}", error);
         std::process::exit(1)
     });
-    let exit_code = match run_platform(config, log_dir) {
+    let exit_code = match run_platform(config, log_dir).await {
         Ok(_) => 0,
         Err(error) => {
             error!("{}", error);
@@ -64,7 +66,7 @@ fn get_log_dir(config: &cli::Config) -> Result<Option<PathBuf>, String> {
 }
 
 #[cfg(windows)]
-fn run_platform(config: &cli::Config, log_dir: Option<PathBuf>) -> Result<(), String> {
+async fn run_platform(config: &cli::Config, log_dir: Option<PathBuf>) -> Result<(), String> {
     if config.run_as_service {
         system_service::run()
     } else {
@@ -75,18 +77,18 @@ fn run_platform(config: &cli::Config, log_dir: Option<PathBuf>) -> Result<(), St
             }
             install_result
         } else {
-            run_standalone(log_dir)
+            run_standalone(log_dir).await
         }
     }
 }
 
 #[cfg(not(windows))]
-fn run_platform(_config: &cli::Config, log_dir: Option<PathBuf>) -> Result<(), String> {
-    run_standalone(log_dir)
+async fn run_platform(_config: &cli::Config, log_dir: Option<PathBuf>) -> Result<(), String> {
+    run_standalone(log_dir).await
 }
 
-fn run_standalone(log_dir: Option<PathBuf>) -> Result<(), String> {
-    if rpc_uniqueness_check::is_another_instance_running() {
+async fn run_standalone(log_dir: Option<PathBuf>) -> Result<(), String> {
+    if rpc_uniqueness_check::is_another_instance_running().await {
         return Err("Another instance of the daemon is already running".to_owned());
     }
 
